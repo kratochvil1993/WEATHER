@@ -47,6 +47,46 @@ document.addEventListener('DOMContentLoaded', () => {
         99: { icon: 'bi-cloud-lightning-rain-fill', desc: 'Silná bouřka s kroupami' }
     };
 
+    // Background Image Mapping
+    const weatherBackgrounds = {
+        0: 'images/sunny.jpg',
+        1: 'images/sunny.jpg',
+        2: 'images/partly_cloudy.jpg',
+        3: 'images/cloudy.jpg',
+        45: 'images/cloudy.jpg',
+        48: 'images/cloudy.jpg',
+        51: 'images/rain.jpg',
+        53: 'images/rain.jpg',
+        55: 'images/rain.jpg',
+        61: 'images/rain.jpg',
+        63: 'images/rain.jpg',
+        65: 'images/rain.jpg',
+        71: 'images/snow.jpg',
+        73: 'images/snow.jpg',
+        75: 'images/snow.jpg',
+        77: 'images/snow.jpg',
+        80: 'images/rain.jpg',
+        81: 'images/rain.jpg',
+        82: 'images/rain.jpg',
+        85: 'images/snow.jpg',
+        86: 'images/snow.jpg',
+        95: 'images/hail.jpg',
+        96: 'images/hail.jpg',
+        99: 'images/hail.jpg'
+    };
+
+    function updateBackground(code) {
+        const bgContainer = document.querySelector('.video-background');
+        const imagePath = weatherBackgrounds[code] || 'images/partly_cloudy.jpg'; // Fallback
+        
+        // Preload image to avoid flickering
+        const img = new Image();
+        img.src = imagePath;
+        img.onload = () => {
+             bgContainer.style.backgroundImage = `url('${imagePath}')`;
+        };
+    }
+
     function getWeatherInfo(code) {
         return weatherCodes[code] || { icon: 'bi-question-circle', desc: 'Neznámé' };
     }
@@ -66,6 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         iconElement.className = `bi ${weatherInfo.icon} display-1 mb-3`;
         conditionElement.textContent = weatherInfo.desc;
+
+        // Update Background
+        updateBackground(current.weather_code);
     }
 
     function updateForecast(daily) {
