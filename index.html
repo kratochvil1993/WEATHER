@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Počasí Plzeň</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="video-background">
+        <!-- Optional: Video or Image Background -->
+        <div class="overlay"></div>
+    </div>
+
+    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5">
+        <!-- Location Buttons -->
+        <div class="btn-group mb-4" role="group" aria-label="Location Selection">
+            <button type="button" class="btn btn-glass active" id="btn-plzen">Plzeň</button>
+            <button type="button" class="btn btn-glass" id="btn-zel-ruda">Železná Ruda</button>
+            <button type="button" class="btn btn-glass" id="btn-cheznovice">Cheznovice</button>
+        </div>
+
+        <div class="row w-100 justify-content-center">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div
+                    class="weather-card glass p-4 p-md-5 text-center text-white h-100 d-flex flex-column justify-content-center">
+                    <h1 class="mb-4 fw-light">Počasí v Plzni</h1>
+
+                    <div id="weather-content" class="fade-in">
+                        <!-- Loading Spinner -->
+                        <div id="loading" class="spinner-border text-light" role="status">
+                            <span class="visually-hidden">Načítání...</span>
+                        </div>
+
+                        <!-- Weather Data (Hidden initially) -->
+                        <div id="weather-data" class="d-none">
+                            <div class="current-weather mb-4">
+                                <i id="weather-icon" class="bi bi-cloud-sun display-1 mb-3"></i>
+                                <h2 class="display-2 fw-bold mb-0"><span id="temperature">--</span>°C</h2>
+                                <p id="condition" class="fs-4 fw-light">Načítání...</p>
+                            </div>
+
+                            <div class="row g-3 stats">
+                                <div class="col-6">
+                                    <div class="stat-item p-3 glass-light rounded">
+                                        <i class="bi bi-wind fs-3 mb-2"></i>
+                                        <p class="mb-0 small text-uppercase opacity-75">Vítr</p>
+                                        <p class="h5 fw-bold"><span id="wind-speed">--</span> km/h</p>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="stat-item p-3 glass-light rounded">
+                                        <i class="bi bi-droplet fs-3 mb-2"></i>
+                                        <p class="mb-0 small text-uppercase opacity-75">Vlhkost</p>
+                                        <p class="h5 fw-bold"><span id="humidity">--</span> %</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 text-white-50 small">
+                                Aktualizováno: <span id="last-updated">--:--</span>
+                            </div>
+                        </div>
+
+                        <div id="error-message" class="alert alert-danger d-none mt-3" role="alert">
+                            Nepodařilo se načíst data o počasí.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="glass p-4 p-md-5 text-white h-100">
+                    <h2 class="mb-4 fw-light text-center">Předpověď na 7 dní</h2>
+                    <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="forecast-tabs" role="tablist">
+                        <!-- Tabs will be injected via JS -->
+                    </ul>
+                    <div class="tab-content" id="forecast-content">
+                        <!-- Content will be injected via JS -->
+                        <div class="text-center mt-5">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Načítání předpovědi...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hourly Forecast Section -->
+        <div class="row w-100 justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="glass p-4 p-md-5 text-white">
+                    <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
+                    <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
+                        <!-- Tabs injected via JS -->
+                    </ul>
+                    <div class="tab-content" id="hourly-content">
+                        <!-- Hourly content injected via JS -->
+                        <div class="text-center">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Načítání hodinové předpovědi...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+
+</html>
