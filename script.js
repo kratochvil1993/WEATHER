@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnZelRuda = document.getElementById('btn-zel-ruda');
     const btnCheznovice = document.getElementById('btn-cheznovice');
 
+    const sunriseElement = document.getElementById('sunrise');
+    const sunsetElement = document.getElementById('sunset');
+    const moonPhaseElement = document.getElementById('moon-phase');
+    const moonIconElement = document.getElementById('moon-icon');
+
     // WMO Weather Codes mapping to Bootstrap Icons and Czech descriptions
     const weatherCodes = {
         0: { icon: 'bi-sun', desc: 'Jasno' },
@@ -91,11 +96,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return weatherCodes[code] || { icon: 'bi-question-circle', desc: 'Neznámé' };
     }
 
-    function updateCurrentWeather(current) {
+    function updateCurrentWeather(current, daily) {
         // Update values
         tempElement.textContent = Math.round(current.temperature_2m);
         windElement.textContent = Math.round(current.wind_speed_10m);
         humidityElement.textContent = current.relative_humidity_2m;
+
+        // Astronomy data
+        if (daily && daily.sunrise && daily.sunset) {
+            const sunriseDate = new Date(daily.sunrise[0]);
+            const sunsetDate = new Date(daily.sunset[0]);
+            sunriseElement.textContent = sunriseDate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+            sunsetElement.textContent = sunsetDate.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+
+            const moonInfo = getMoonPhase();
+            moonPhaseElement.textContent = moonInfo.name;
+            moonIconElement.className = `bi ${moonInfo.icon} fs-4 mb-1`;
+        }
         
         // Update Date
         const now = new Date();
@@ -109,6 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Background
         updateBackground(current.weather_code);
+    }
+
+    function getMoonPhase() {
+        const lp = 2551443;
+        const now = new Date();
+        const newMoon = new Date(1970, 0, 7, 20, 35, 0);
+        const phase = ((now.getTime() - newMoon.getTime()) / 1000) % lp;
+        const phaseDays = Math.floor(phase / (24 * 3600)) + 1;
+
+        if (phaseDays <= 1) return { name: 'Nov', icon: 'bi-moon' };
+        if (phaseDays <= 6) return { name: 'Dorůstající srpek', icon: 'bi-moon' };
+        if (phaseDays <= 8) return { name: 'První čtvrť', icon: 'bi-moon-stars' };
+        if (phaseDays <= 13) return { name: 'Dorůstající měsíc', icon: 'bi-moon-stars-fill' };
+        if (phaseDays <= 16) return { name: 'Úplněk', icon: 'bi-moon-fill' };
+        if (phaseDays <= 21) return { name: 'Couvající měsíc', icon: 'bi-moon-stars-fill' };
+        if (phaseDays <= 23) return { name: 'Poslední čtvrť', icon: 'bi-moon-stars' };
+        if (phaseDays <= 28) return { name: 'Ubývající srpek', icon: 'bi-moon' };
+        return { name: 'Nov', icon: 'bi-moon' };
     }
 
     function updateForecast(daily) {
@@ -289,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorElement.classList.add('d-none');
         cityTitleElement.textContent = title;
 
-        const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+        const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
 
         fetch(apiUrl)
         .then(response => {
@@ -299,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(data => {
-            updateCurrentWeather(data.current);
+            updateCurrentWeather(data.current, data.daily);
             updateForecast(data.daily);
             updateHourlyForecast(data.hourly);
             
