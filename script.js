@@ -315,47 +315,63 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Event Listeners for Buttons
+
+    // Event Listeners for Buttons (Only if they exist)
     function updateActiveButton(activeBtn) {
         [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => {
-            if (btn === activeBtn) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
+            if (btn) {
+                if (btn === activeBtn) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
             }
         });
     }
 
-    btnPlzen.addEventListener('click', () => {
-        updateActiveButton(btnPlzen);
-        fetchWeather(49.7475, 13.3776, 'Počasí v Plzni');
-    });
+    if (btnPlzen) {
+        btnPlzen.addEventListener('click', () => {
+            updateActiveButton(btnPlzen);
+            fetchWeather(49.7475, 13.3776, 'Počasí v Plzni');
+        });
+    }
 
-    btnZelRuda.addEventListener('click', () => {
-        updateActiveButton(btnZelRuda);
-        fetchWeather(49.1356, 13.2366, 'Počasí Železná Ruda');
-    });
+    if (btnZelRuda) {
+        btnZelRuda.addEventListener('click', () => {
+            updateActiveButton(btnZelRuda);
+            fetchWeather(49.1356, 13.2366, 'Počasí Železná Ruda');
+        });
+    }
 
-    btnCheznovice.addEventListener('click', () => {
-        updateActiveButton(btnCheznovice);
-        fetchWeather(49.7789, 13.7854, 'Počasí v Cheznovicích');
-    });
+    if (btnCheznovice) {
+        btnCheznovice.addEventListener('click', () => {
+            updateActiveButton(btnCheznovice);
+            fetchWeather(49.7789, 13.7854, 'Počasí v Cheznovicích');
+        });
+    }
 
-    // Search & Autocomplete Logic
+    // Search logic for Index Page
     const searchInput = document.getElementById('search-input');
     const searchButton = document.getElementById('search-button');
     const suggestionsList = document.getElementById('suggestions-list');
-    let debounceTimer;
 
-    function handleSearch(term) {
-        const query = term || searchInput.value.trim();
+    // Search logic for History Page (Teploty)
+    const historySearchInput = document.getElementById('history-search-input');
+    const historySearchButton = document.getElementById('history-search-button');
+    const historySuggestionsList = document.getElementById('history-suggestions-list');
+    
+    let debounceTimer;
+    let chartInstanceMean = null;
+    let chartInstanceMax = null;
+
+    function handleSearch(inputElement, isHistory = false) {
+        const query = inputElement ? inputElement.value.trim() : '';
         if (!query) return;
 
-        // Reset UI for search
-        [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+        const suggestionsElement = isHistory ? historySuggestionsList : suggestionsList;
         
         // Hide suggestions
-        suggestionsList.classList.add('d-none');
+        if (suggestionsElement) suggestionsElement.classList.add('d-none');
 
         // Fetch coordinates
         fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=cs&format=json`)
@@ -367,9 +383,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lat = result.latitude;
                     const lon = result.longitude;
                     
-                    // Update input with full name if available or just name
-                    searchInput.value = name; 
-                    fetchWeather(lat, lon, `Počasí ${name}`);
+                    // Update input
+                    if (inputElement) inputElement.value = name; 
+
+                    if (isHistory) {
+                        fetchHistoricalData(lat, lon, name);
+                    } else {
+                        // Reset buttons on main page if needed
+                        if (btnPlzen && btnZelRuda && btnCheznovice) {
+                             [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+                        }
+                        fetchWeather(lat, lon, `Počasí ${name}`);
+                    }
                 } else {
                     alert('Místo nebylo nalezeno. Zkuste to prosím znovu.');
                 }
@@ -378,6 +403,246 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error fetching location:', error);
                 alert('Chyba při vyhledávání místa.');
             });
+    }
+
+    function fetchHistoricalData(lat, lon, name) {
+        const chartCanvasMean = document.getElementById('temperatureChart');
+        const chartCanvasMax = document.getElementById('maxTempChart');
+        const loadingChart = document.getElementById('loading-chart');
+        const errorChart = document.getElementById('error-chart');
+        const titleElement = document.querySelector('h1.fw-light');
+
+        if (!chartCanvasMean || !chartCanvasMax) return;
+
+        titleElement.textContent = `Průměrné Teploty - ${name}`;
+        loadingChart.classList.remove('d-none');
+        errorChart.classList.add('d-none');
+        chartCanvasMean.classList.add('d-none'); 
+        chartCanvasMax.classList.add('d-none');
+
+        // Fetch Data for 2023, 2024 and 2025
+        // Using archive-api.open-meteo.com
+        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=2023-01-01&end_date=2025-12-31&daily=temperature_2m_mean,temperature_2m_max&timezone=auto`;
+
+        fetch(url)
+            .then(res => {
+                if(!res.ok) throw new Error('Data fetch failed');
+                return res.json();
+            })
+            .then(data => {
+                loadingChart.classList.add('d-none');
+                chartCanvasMean.classList.remove('d-none');
+                chartCanvasMax.classList.remove('d-none');
+                processAndRenderChart(data.daily);
+            })
+            .catch(err => {
+                console.error(err);
+                loadingChart.classList.add('d-none');
+                errorChart.classList.remove('d-none');
+            });
+    }
+
+    function processAndRenderChart(dailyData) {
+        const monthNames = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+        
+        // Arrays for Mean Temps (2025, 2024, 2023)
+        const monthlySums2025 = new Array(12).fill(0);
+        const monthlyCounts2025 = new Array(12).fill(0);
+        const monthlySums2024 = new Array(12).fill(0);
+        const monthlyCounts2024 = new Array(12).fill(0);
+        const monthlySums2023 = new Array(12).fill(0);
+        const monthlyCounts2023 = new Array(12).fill(0);
+        
+        // Arrays for Max Temps (2025, 2024 & 2023)
+        const monthlyMaxes2025 = new Array(12).fill(-Infinity);
+        const monthlyMaxes2024 = new Array(12).fill(-Infinity);
+        const monthlyMaxes2023 = new Array(12).fill(-Infinity);
+
+        dailyData.time.forEach((dateStr, index) => {
+            const date = new Date(dateStr);
+            const month = date.getMonth(); // 0-11
+            const year = date.getFullYear();
+            
+            const tempMean = dailyData.temperature_2m_mean[index];
+            const tempMax = dailyData.temperature_2m_max[index];
+            
+            // Process Mean
+            if (tempMean !== null && tempMean !== undefined) {
+                if (year === 2025) {
+                    monthlySums2025[month] += tempMean;
+                    monthlyCounts2025[month]++;
+                } else if (year === 2024) {
+                    monthlySums2024[month] += tempMean;
+                    monthlyCounts2024[month]++;
+                } else if (year === 2023) {
+                    monthlySums2023[month] += tempMean;
+                    monthlyCounts2023[month]++;
+                }
+            }
+
+            // Process Max
+            if (tempMax !== null && tempMax !== undefined) {
+                if (year === 2025) {
+                    if (tempMax > monthlyMaxes2025[month]) monthlyMaxes2025[month] = tempMax;
+                } else if (year === 2024) {
+                    if (tempMax > monthlyMaxes2024[month]) monthlyMaxes2024[month] = tempMax;
+                } else if (year === 2023) {
+                    if (tempMax > monthlyMaxes2023[month]) monthlyMaxes2023[month] = tempMax;
+                }
+            }
+        });
+
+        const calcAvg = (sums, counts) => sums.map((sum, i) => counts[i] > 0 ? (sum / counts[i]).toFixed(1) : null);
+        const meanData2025 = calcAvg(monthlySums2025, monthlyCounts2025);
+        const meanData2024 = calcAvg(monthlySums2024, monthlyCounts2024);
+        const meanData2023 = calcAvg(monthlySums2023, monthlyCounts2023);
+
+        // Clean up -Infinity if no data
+        const cleanupMax = (arr) => arr.map(max => max === -Infinity ? null : max);
+        const maxData2025 = cleanupMax(monthlyMaxes2025);
+        const maxData2024 = cleanupMax(monthlyMaxes2024);
+        const maxData2023 = cleanupMax(monthlyMaxes2023);
+
+        // Render Mean Chart (White vs Cyan vs Purple) - 2025 vs 2024 vs 2023
+        renderChart('temperatureChart', monthNames, [
+            {
+                label: '2025',
+                data: meanData2025,
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 3,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: 'rgba(255,255,255,0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '2024',
+                data: meanData2024,
+                borderColor: '#00bcd4', // Cyan
+                backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#00bcd4',
+                pointBorderColor: 'rgba(0, 188, 212, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '2023',
+                data: meanData2023,
+                borderColor: '#9c27b0', // Purple
+                backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#9c27b0',
+                pointBorderColor: 'rgba(156, 39, 176, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            }
+        ], 'mean');
+        
+        // Render Max Chart (Orange vs Cyan vs Purple) - 2025 vs 2024 vs 2023
+        renderChart('maxTempChart', monthNames, [
+            {
+                label: '2025',
+                data: maxData2025,
+                borderColor: '#ff9e42', // Orange
+                backgroundColor: 'rgba(255, 158, 66, 0.2)',
+                borderWidth: 3,
+                pointBackgroundColor: '#ff9e42',
+                pointBorderColor: 'rgba(255, 158, 66, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '2024',
+                data: maxData2024,
+                borderColor: '#00bcd4', // Cyan
+                backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#00bcd4',
+                pointBorderColor: 'rgba(0, 188, 212, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '2023',
+                data: maxData2023,
+                borderColor: '#9c27b0', // Purple
+                backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#9c27b0',
+                pointBorderColor: 'rgba(156, 39, 176, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            }
+        ], 'max');
+    }
+
+    function renderChart(canvasId, labels, datasets, type) {
+         const ctx = document.getElementById(canvasId).getContext('2d');
+         
+         // Destroy existing instance based on type
+         if (type === 'mean') {
+             if (chartInstanceMean) chartInstanceMean.destroy();
+         } else if (type === 'max') {
+             if (chartInstanceMax) chartInstanceMax.destroy();
+         }
+
+         // Note: Canvas gradients need the context, so they are best handled inside the dataset config or here if simple.
+         // For complexity, we pass simple colors in dataset config above.
+         // If we strictly want the specific gradient from before, we'd need to recreate it here for each dataset opacity.
+         // Given the requirements, solid colors/simple rgba fills are cleaner for multi-line.
+
+         const newChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: 'white', font: { family: 'Inter', size: 14 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        bodyFont: { family: 'Inter' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)', font: { family: 'Inter' } },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: {
+                        ticks: { color: 'rgba(255,255,255,0.7)', font: { family: 'Inter' } },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    }
+                }
+            }
+         });
+
+         if (type === 'mean') {
+             chartInstanceMean = newChart;
+         } else {
+             chartInstanceMax = newChart;
+         }
     }
 
     // Debounce function
@@ -389,24 +654,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fetch Suggestions
-    function fetchSuggestions(query) {
+    function fetchSuggestions(query, isHistory = false) {
+        const inputElement = isHistory ? historySearchInput : searchInput;
+        const suggestionsElement = isHistory ? historySuggestionsList : suggestionsList;
+
+        if (!suggestionsElement) return;
+        
         if (query.length < 2) {
-            suggestionsList.classList.add('d-none');
-            suggestionsList.innerHTML = '';
+            suggestionsElement.classList.add('d-none');
+            suggestionsElement.innerHTML = '';
             return;
         }
 
         fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=cs&format=json`)
             .then(response => response.json())
             .then(data => {
-                suggestionsList.innerHTML = '';
+                suggestionsElement.innerHTML = '';
                 if (data.results && data.results.length > 0) {
-                    suggestionsList.classList.remove('d-none');
+                    suggestionsElement.classList.remove('d-none');
                     data.results.forEach(place => {
                         const item = document.createElement('div');
                         item.className = 'suggestion-item';
                         
-                        // Construct details string (e.g., "District, Region, Country")
                         let details = [];
                         if (place.admin2) details.push(place.admin2);
                         if (place.admin1) details.push(place.admin1);
@@ -420,17 +689,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
 
                         item.addEventListener('click', () => {
-                            searchInput.value = place.name;
-                            suggestionsList.classList.add('d-none');
-                            fetchWeather(place.latitude, place.longitude, `Počasí ${place.name}`);
-                             // Reset buttons
-                            [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+                            if (inputElement) inputElement.value = place.name;
+                            suggestionsElement.classList.add('d-none');
+                            
+                           if (isHistory) {
+                               fetchHistoricalData(place.latitude, place.longitude, place.name);
+                           } else {
+                                fetchWeather(place.latitude, place.longitude, `Počasí ${place.name}`);
+                                if (btnPlzen && btnZelRuda && btnCheznovice) {
+                                    [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+                                }
+                           }
                         });
 
-                        suggestionsList.appendChild(item);
+                        suggestionsElement.appendChild(item);
                     });
                 } else {
-                    suggestionsList.classList.add('d-none');
+                    suggestionsElement.classList.add('d-none');
                 }
             })
             .catch(err => {
@@ -438,26 +713,88 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    searchButton.addEventListener('click', () => handleSearch());
+    // Main Search Listeners
+    if (searchButton) {
+        searchButton.addEventListener('click', () => handleSearch(searchInput, false));
+    }
     
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-            suggestionsList.classList.add('d-none');
-        }
-    });
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch(searchInput, false);
+        });
 
-    searchInput.addEventListener('input', debounce((e) => {
-        fetchSuggestions(e.target.value.trim());
-    }, 300));
+        searchInput.addEventListener('input', debounce((e) => {
+            fetchSuggestions(e.target.value.trim(), false);
+        }, 300));
+    }
+
+    // History Search Listeners (Teploty Page)
+    if (historySearchButton) {
+        historySearchButton.addEventListener('click', () => handleSearch(historySearchInput, true));
+    }
+
+    if (historySearchInput) {
+        historySearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch(historySearchInput, true);
+        });
+
+        historySearchInput.addEventListener('input', debounce((e) => {
+            fetchSuggestions(e.target.value.trim(), true);
+        }, 300));
+    }
 
     // Close suggestions on click outside
     document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-            suggestionsList.classList.add('d-none');
+        // Main page suggestions
+        if (searchInput && suggestionsList) {
+            if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                suggestionsList.classList.add('d-none');
+            }
+        }
+        // History page suggestions
+        if (historySearchInput && historySuggestionsList) {
+            if (!historySearchInput.contains(e.target) && !historySuggestionsList.contains(e.target)) {
+                historySuggestionsList.classList.add('d-none');
+            }
         }
     });
 
-    // Initial Fetch (Plzeň)
-    fetchWeather(49.7475, 13.3776, 'Počasí v Plzni');
+    // Side Menu Logic
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidePanel = document.getElementById('side-panel');
+    const menuClose = document.getElementById('menu-close');
+
+    if (menuToggle && sidePanel && menuClose) {
+        function toggleMenu() {
+            sidePanel.classList.toggle('open');
+        }
+
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu();
+        });
+
+        menuClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidePanel.classList.remove('open');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (sidePanel.classList.contains('open') && !sidePanel.contains(e.target) && e.target !== menuToggle) {
+                 sidePanel.classList.remove('open');
+            }
+        });
+    }
+
+    // Initial Fetch (Plzeň) - Only on main page if weather elements exist
+    if (document.getElementById('weather-data')) {
+        fetchWeather(49.7475, 13.3776, 'Počasí v Plzni');
+    }
+    
+    // Initial Chart (Prague/Plzeň default) - Only on Teploty page
+    if (document.getElementById('temperatureChart')) {
+         // Default to Plzeň for consistency
+         fetchHistoricalData(49.7475, 13.3776, 'Plzeň');
+    }
 });
