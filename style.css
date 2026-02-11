@@ -335,3 +335,35 @@ h1 {
 #menu-toggle:hover {
     transform: rotate(90deg);
 }
+/* Weather Map Styles */
+#weather-map {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2); /* Darker base for map */
+}
+
+/* Customizing Leaflet Controls for Dark Theme */
+.leaflet-container {
+    background: #111 !important;
+}
+
+.leaflet-bar {
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+}
+
+.leaflet-bar a {
+    background-color: rgba(30, 60, 114, 0.9) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: rgba(42, 82, 152, 1) !important;
+}
+
+.leaflet-control-attribution {
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(5px);
+    font-size: 10px !important;
+}

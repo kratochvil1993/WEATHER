@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -174,10 +177,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- Weather Map Section -->
+        <div class="row w-100 justify-content-center mt-4 mb-5">
+            <div class="col-lg-8">
+                <div class="glass p-4 text-white">
+                    <h2 class="mb-4 fw-light text-center">Srážkový Radar</h2>
+                    <div id="weather-map" class="rounded overflow-hidden" style="height: 450px; z-index: 1;">
+                        <!-- Map injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Custom JS -->
     <script src="script.js"></script>
 </body>

@@ -340,6 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             loadingElement.classList.add('d-none');
             contentElement.classList.remove('d-none');
+
+            // Initialize/Update Map
+            initMap(lat, lon);
         })
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
@@ -398,6 +401,107 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer;
     let chartInstanceMean = null;
     let chartInstanceMax = null;
+    let weatherMap = null;
+    let radarLayer = null;
+
+    let mapInitialized = false;
+
+    function initMap(lat, lon) {
+        const mapContainer = document.getElementById('weather-map');
+        if (!mapContainer) return;
+        
+        if (weatherMap) {
+            weatherMap.setView([lat, lon], 8);
+            setTimeout(() => {
+                weatherMap.invalidateSize();
+                updateRadarLayer();
+            }, 300);
+            return;
+        }
+
+        // Use IntersectionObserver to initialize map only when it becomes visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !mapInitialized) {
+                    mapInitialized = true;
+                    
+                    weatherMap = L.map('weather-map', {
+                        minZoom: 4,
+                        maxZoom: 10
+                    }).setView([lat, lon], 6);
+
+                    // Dark tile layer
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                        subdomains: 'abcd',
+                        maxZoom: 20
+                    }).addTo(weatherMap);
+
+                    // Load radar after a delay to ensure map is properly sized
+                    setTimeout(() => {
+                        weatherMap.invalidateSize();
+                        updateRadarLayer();
+                    }, 300);
+                    
+                    observer.disconnect();
+                }
+            });
+        }, { threshold: 0.1 });
+
+        observer.observe(mapContainer);
+    }
+
+    function updateRadarLayer() {
+        if (!weatherMap) return;
+
+        // Fetch latest RainViewer data
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(res => res.json())
+            .then(data => {
+                if (radarLayer) {
+                    weatherMap.removeLayer(radarLayer);
+                }
+
+                // Use much older timestamp (6th from last) to ensure all tiles are available at all zoom levels
+                // This prevents tiles from disappearing when zooming in
+                const radarData = data.radar.past;
+                const timeIndex = Math.max(0, radarData.length - 6);
+                const latestTime = radarData[timeIndex].time;
+                const radarUrl = `https://tilecache.rainviewer.com/v2/radar/${latestTime}/256/{z}/{x}/{y}/2/1_1.png`;
+
+                console.log('Loading radar tiles from timestamp:', new Date(latestTime * 1000).toLocaleTimeString('cs-CZ'));
+                console.log('Current map zoom level:', weatherMap.getZoom());
+                console.log('Radar URL pattern:', radarUrl);
+
+                radarLayer = L.tileLayer(radarUrl, {
+                    opacity: 0.8,
+                    maxZoom: 10,
+                    maxNativeZoom: 6, // Match default zoom - tiles scale beyond this
+                    minZoom: 4,
+                    attribution: '&copy; <a href="https://www.rainviewer.com/api.html">RainViewer</a>'
+                });
+
+                radarLayer.on('tileerror', (error) => {
+                    console.error('Tile load error at zoom', weatherMap.getZoom(), ':', error);
+                });
+
+                radarLayer.on('load', () => {
+                    console.log('Radar layer loaded successfully at zoom', weatherMap.getZoom());
+                });
+
+                radarLayer.on('tileload', (e) => {
+                    console.log('Tile loaded:', e.coords);
+                });
+
+                radarLayer.addTo(weatherMap);
+                
+                // Force redraw after adding layer
+                setTimeout(() => {
+                    if (weatherMap) weatherMap.invalidateSize();
+                }, 100);
+            })
+            .catch(err => console.error('Error fetching radar data:', err));
+    }
 
     function handleSearch(inputElement, isHistory = false) {
         const query = inputElement ? inputElement.value.trim() : '';
