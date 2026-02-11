@@ -298,6 +298,123 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchWeather(49.7789, 13.7854, 'Počasí v Cheznovicích');
     });
 
+    // Search & Autocomplete Logic
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const suggestionsList = document.getElementById('suggestions-list');
+    let debounceTimer;
+
+    function handleSearch(term) {
+        const query = term || searchInput.value.trim();
+        if (!query) return;
+
+        // Reset UI for search
+        [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+        
+        // Hide suggestions
+        suggestionsList.classList.add('d-none');
+
+        // Fetch coordinates
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=cs&format=json`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    const result = data.results[0];
+                    const name = result.name;
+                    const lat = result.latitude;
+                    const lon = result.longitude;
+                    
+                    // Update input with full name if available or just name
+                    searchInput.value = name; 
+                    fetchWeather(lat, lon, `Počasí ${name}`);
+                } else {
+                    alert('Místo nebylo nalezeno. Zkuste to prosím znovu.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching location:', error);
+                alert('Chyba při vyhledávání místa.');
+            });
+    }
+
+    // Debounce function
+    function debounce(func, delay) {
+        return function(...args) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    // Fetch Suggestions
+    function fetchSuggestions(query) {
+        if (query.length < 2) {
+            suggestionsList.classList.add('d-none');
+            suggestionsList.innerHTML = '';
+            return;
+        }
+
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=cs&format=json`)
+            .then(response => response.json())
+            .then(data => {
+                suggestionsList.innerHTML = '';
+                if (data.results && data.results.length > 0) {
+                    suggestionsList.classList.remove('d-none');
+                    data.results.forEach(place => {
+                        const item = document.createElement('div');
+                        item.className = 'suggestion-item';
+                        
+                        // Construct details string (e.g., "District, Region, Country")
+                        let details = [];
+                        if (place.admin2) details.push(place.admin2);
+                        if (place.admin1) details.push(place.admin1);
+                        if (place.country) details.push(place.country);
+                        
+                        const detailsStr = details.join(', ');
+
+                        item.innerHTML = `
+                            <span class="suggestion-name">${place.name}</span>
+                            <span class="suggestion-details">${detailsStr}</span>
+                        `;
+
+                        item.addEventListener('click', () => {
+                            searchInput.value = place.name;
+                            suggestionsList.classList.add('d-none');
+                            fetchWeather(place.latitude, place.longitude, `Počasí ${place.name}`);
+                             // Reset buttons
+                            [btnPlzen, btnZelRuda, btnCheznovice].forEach(btn => btn.classList.remove('active'));
+                        });
+
+                        suggestionsList.appendChild(item);
+                    });
+                } else {
+                    suggestionsList.classList.add('d-none');
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching suggestions:', err);
+            });
+    }
+
+    searchButton.addEventListener('click', () => handleSearch());
+    
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+            suggestionsList.classList.add('d-none');
+        }
+    });
+
+    searchInput.addEventListener('input', debounce((e) => {
+        fetchSuggestions(e.target.value.trim());
+    }, 300));
+
+    // Close suggestions on click outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+            suggestionsList.classList.add('d-none');
+        }
+    });
+
     // Initial Fetch (Plzeň)
     fetchWeather(49.7475, 13.3776, 'Počasí v Plzni');
 });

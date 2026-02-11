@@ -22,6 +22,20 @@
     </div>
 
     <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5">
+        <!-- Search Section -->
+        <div class="row w-100 justify-content-center mb-4">
+            <div class="col-md-6 col-lg-4 position-relative">
+                <div class="input-group">
+                    <input type="text" id="search-input" class="form-control glass-input text-white"
+                        placeholder="Zadejte město nebo vesnici..." aria-label="Hledat město" autocomplete="off">
+                    <button class="btn btn-glass" type="button" id="search-button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <div id="suggestions-list" class="suggestions-container d-none"></div>
+            </div>
+        </div>
+
         <!-- Location Buttons -->
         <div class="btn-group mb-4" role="group" aria-label="Location Selection">
             <button type="button" class="btn btn-glass active" id="btn-plzen">Plzeň</button>
