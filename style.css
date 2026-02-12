@@ -79,6 +79,11 @@ h1 {
   line-height: 1;
 }
 
+.stats-section {
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+}
+
 .display-1 {
   font-size: 5rem;
   text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
