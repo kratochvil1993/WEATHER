@@ -559,9 +559,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chartCanvasMean.classList.add('d-none'); 
         chartCanvasMax.classList.add('d-none');
 
-        // Fetch Data for 2023, 2024 and 2025
+        // Fetch Data for 1993, 2000, 2023, 2024 and 2025
         // Using archive-api.open-meteo.com
-        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=2023-01-01&end_date=2025-12-31&daily=temperature_2m_mean,temperature_2m_max&timezone=auto`;
+        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=1993-01-01&end_date=2025-12-31&daily=temperature_2m_mean,temperature_2m_max&timezone=auto`;
 
         fetch(url)
             .then(res => {
@@ -584,18 +584,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function processAndRenderChart(dailyData) {
         const monthNames = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
         
-        // Arrays for Mean Temps (2025, 2024, 2023)
+        // Arrays for Mean Temps (2025, 2024, 2023, 2000, 1993)
         const monthlySums2025 = new Array(12).fill(0);
         const monthlyCounts2025 = new Array(12).fill(0);
         const monthlySums2024 = new Array(12).fill(0);
         const monthlyCounts2024 = new Array(12).fill(0);
         const monthlySums2023 = new Array(12).fill(0);
         const monthlyCounts2023 = new Array(12).fill(0);
+        const monthlySums2000 = new Array(12).fill(0);
+        const monthlyCounts2000 = new Array(12).fill(0);
+        const monthlySums1993 = new Array(12).fill(0);
+        const monthlyCounts1993 = new Array(12).fill(0);
         
-        // Arrays for Max Temps (2025, 2024 & 2023)
+        // Arrays for Max Temps (2025, 2024, 2023, 2000 & 1993)
         const monthlyMaxes2025 = new Array(12).fill(-Infinity);
         const monthlyMaxes2024 = new Array(12).fill(-Infinity);
         const monthlyMaxes2023 = new Array(12).fill(-Infinity);
+        const monthlyMaxes2000 = new Array(12).fill(-Infinity);
+        const monthlyMaxes1993 = new Array(12).fill(-Infinity);
 
         dailyData.time.forEach((dateStr, index) => {
             const date = new Date(dateStr);
@@ -616,6 +622,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (year === 2023) {
                     monthlySums2023[month] += tempMean;
                     monthlyCounts2023[month]++;
+                } else if (year === 2000) {
+                    monthlySums2000[month] += tempMean;
+                    monthlyCounts2000[month]++;
+                } else if (year === 1993) {
+                    monthlySums1993[month] += tempMean;
+                    monthlyCounts1993[month]++;
                 }
             }
 
@@ -627,6 +639,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (tempMax > monthlyMaxes2024[month]) monthlyMaxes2024[month] = tempMax;
                 } else if (year === 2023) {
                     if (tempMax > monthlyMaxes2023[month]) monthlyMaxes2023[month] = tempMax;
+                } else if (year === 2000) {
+                    if (tempMax > monthlyMaxes2000[month]) monthlyMaxes2000[month] = tempMax;
+                } else if (year === 1993) {
+                    if (tempMax > monthlyMaxes1993[month]) monthlyMaxes1993[month] = tempMax;
                 }
             }
         });
@@ -635,14 +651,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const meanData2025 = calcAvg(monthlySums2025, monthlyCounts2025);
         const meanData2024 = calcAvg(monthlySums2024, monthlyCounts2024);
         const meanData2023 = calcAvg(monthlySums2023, monthlyCounts2023);
+        const meanData2000 = calcAvg(monthlySums2000, monthlyCounts2000);
+        const meanData1993 = calcAvg(monthlySums1993, monthlyCounts1993);
 
         // Clean up -Infinity if no data
         const cleanupMax = (arr) => arr.map(max => max === -Infinity ? null : max);
         const maxData2025 = cleanupMax(monthlyMaxes2025);
         const maxData2024 = cleanupMax(monthlyMaxes2024);
         const maxData2023 = cleanupMax(monthlyMaxes2023);
+        const maxData2000 = cleanupMax(monthlyMaxes2000);
+        const maxData1993 = cleanupMax(monthlyMaxes1993);
 
-        // Render Mean Chart (White vs Cyan vs Purple) - 2025 vs 2024 vs 2023
+        // Render Mean Chart (White vs Cyan vs Purple vs Green vs Yellow) - 2025 vs 2024 vs 2023 vs 2000 vs 1993
         renderChart('temperatureChart', monthNames, [
             {
                 label: '2025',
@@ -682,10 +702,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 pointHoverRadius: 7,
                 fill: true,
                 tension: 0.4
+            },
+            {
+                label: '2000',
+                data: meanData2000,
+                borderColor: '#4caf50', // Green
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#4caf50',
+                pointBorderColor: 'rgba(76, 175, 80, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '1993',
+                data: meanData1993,
+                borderColor: '#ffeb3b', // Yellow
+                backgroundColor: 'rgba(255, 235, 59, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#ffeb3b',
+                pointBorderColor: 'rgba(255, 235, 59, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
             }
         ], 'mean');
         
-        // Render Max Chart (Orange vs Cyan vs Purple) - 2025 vs 2024 vs 2023
+        // Render Max Chart (Orange vs Cyan vs Purple vs Green vs Yellow) - 2025 vs 2024 vs 2023 vs 2000 vs 1993
         renderChart('maxTempChart', monthNames, [
             {
                 label: '2025',
@@ -721,6 +767,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 borderWidth: 3,
                 pointBackgroundColor: '#9c27b0',
                 pointBorderColor: 'rgba(156, 39, 176, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '2000',
+                data: maxData2000,
+                borderColor: '#4caf50', // Green
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#4caf50',
+                pointBorderColor: 'rgba(76, 175, 80, 0.5)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: '1993',
+                data: maxData1993,
+                borderColor: '#ffeb3b', // Yellow
+                backgroundColor: 'rgba(255, 235, 59, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#ffeb3b',
+                pointBorderColor: 'rgba(255, 235, 59, 0.5)',
                 pointRadius: 5,
                 pointHoverRadius: 7,
                 fill: true,
