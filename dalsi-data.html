@@ -90,32 +90,6 @@
                             </div>
                         </div>
 
-                        <!-- Air Quality Section -->
-                        <div class="row mb-5">
-                            <div class="col-12">
-                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-lungs me-2"></i>Kvalita vzduchu
-                                </h2>
-                                <div class="row g-4">
-                                    <div class="col-md-4">
-                                        <div class="glass-light p-4 rounded text-center h-100">
-                                            <p class="mb-2 small text-uppercase opacity-75">European AQI</p>
-                                            <div class="display-3 fw-bold mb-2" id="aqi-current">--</div>
-                                            <div class="badge rounded-pill px-3 py-2 mb-3" id="aqi-level">--</div>
-                                            <p class="small opacity-75 mb-1">PM2.5: <span id="pm25">--</span> µg/m³</p>
-                                            <p class="small opacity-75 mb-0">PM10: <span id="pm10">--</span> µg/m³</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <div class="glass-light p-4 rounded h-100">
-                                            <div class="chart-container" style="height: 250px;">
-                                                <canvas id="aqiChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Atmospheric Pressure Section -->
                         <div class="row mb-5">
                             <div class="col-12">
@@ -186,6 +160,188 @@
                                         <div class="glass-light p-4 rounded h-100">
                                             <div class="chart-container" style="height: 400px;">
                                                 <canvas id="windRoseChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visibility Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-eye me-2"></i>Viditelnost</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Aktuální viditelnost</p>
+                                            <div class="h1 fw-bold mb-2" id="visibility-current">--</div>
+                                            <div class="badge rounded-pill px-3 py-2" id="visibility-level">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="visibilityChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dew Point Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-droplet-half me-2"></i>Rosný bod
+                                </h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Aktuální rosný bod</p>
+                                            <div class="h1 fw-bold mb-2" id="dewpoint-current">--</div>
+                                            <div class="badge rounded-pill px-3 py-2" id="dewpoint-comfort">--</div>
+                                            <p class="small opacity-75 mt-3">Teplota: <span id="actual-temp">--</span>°C
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="dewpointChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Apparent Temperature Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-thermometer-sun me-2"></i>Pocitová
+                                    teplota</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Pocitová teplota</p>
+                                            <div class="h1 fw-bold mb-2" id="apparent-temp-current">--</div>
+                                            <p class="small opacity-75 mb-1">Skutečná: <span id="real-temp">--</span>°C
+                                            </p>
+                                            <p class="small opacity-75">Rozdíl: <span id="temp-difference">--</span>°C
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="apparentTempChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cloud Cover Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-clouds me-2"></i>Oblačnost</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Celková oblačnost</p>
+                                            <div class="h1 fw-bold mb-3" id="cloud-cover-current">--</div>
+                                            <p class="small opacity-75 mb-1">Nízká: <span id="cloud-low">--</span>%</p>
+                                            <p class="small opacity-75 mb-1">Střední: <span id="cloud-mid">--</span>%
+                                            </p>
+                                            <p class="small opacity-75">Vysoká: <span id="cloud-high">--</span>%</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="cloudCoverChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Solar Radiation Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-brightness-high me-2"></i>Sluneční
+                                    záření</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Aktuální záření</p>
+                                            <div class="h2 fw-bold mb-2" id="solar-current">--</div>
+                                            <p class="small opacity-75 mb-3">Přímé: <span id="solar-direct">--</span>
+                                                W/m²</p>
+                                            <div class="badge rounded-pill px-3 py-2" id="solar-potential">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="solarChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Snow Depth Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-snow me-2"></i>Sníh</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Výška sněhu</p>
+                                            <div class="h1 fw-bold mb-3" id="snow-depth-current">--</div>
+                                            <p class="mb-2 small text-uppercase opacity-75">Nový sníh (24h)</p>
+                                            <div class="h3 fw-bold" id="snow-new">--</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="snowChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pollen Section -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-4 fw-light text-center"><i class="bi bi-flower1 me-2"></i>Pylová data</h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Celková úroveň</p>
+                                            <div class="badge rounded-pill px-3 py-2 mb-3" id="pollen-level">--</div>
+                                            <p class="small opacity-75 mb-1">Bříza: <span id="pollen-birch">--</span>
+                                            </p>
+                                            <p class="small opacity-75 mb-1">Tráva: <span id="pollen-grass">--</span>
+                                            </p>
+                                            <p class="small opacity-75 mb-1">Oliva: <span id="pollen-olive">--</span>
+                                            </p>
+                                            <p class="small opacity-75">Ambrózie: <span id="pollen-ragweed">--</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="glass-light p-4 rounded h-100">
+                                            <div class="chart-container" style="height: 250px;">
+                                                <canvas id="pollenChart"></canvas>
                                             </div>
                                         </div>
                                     </div>

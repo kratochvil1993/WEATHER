@@ -1012,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== ADVANCED WEATHER DATA SECTION ==========
     // Chart instances for advanced data
     let uvChartInstance = null;
-    let aqiChartInstance = null;
+
     let pressureChartInstance = null;
     let rainfallChartInstance = null;
     let windRoseChartInstance = null;
@@ -1026,15 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { level: 'Extrémní', color: '#9c27b0', bg: 'rgba(156, 39, 176, 0.2)' };
     }
 
-    // Helper function to get AQI level and color
-    function getAQILevel(aqi) {
-        if (aqi <= 20) return { level: 'Dobrá', color: '#4caf50', bg: 'rgba(76, 175, 80, 0.2)' };
-        if (aqi <= 40) return { level: 'Slušná', color: '#ffeb3b', bg: 'rgba(255, 235, 59, 0.2)' };
-        if (aqi <= 60) return { level: 'Mírně znečištěná', color: '#ff9e42', bg: 'rgba(255, 158, 66, 0.2)' };
-        if (aqi <= 80) return { level: 'Špatná', color: '#f44336', bg: 'rgba(244, 67, 54, 0.2)' };
-        if (aqi <= 100) return { level: 'Velmi špatná', color: '#9c27b0', bg: 'rgba(156, 39, 176, 0.2)' };
-        return { level: 'Extrémně špatná', color: '#880e4f', bg: 'rgba(136, 14, 79, 0.2)' };
-    }
+
 
     // Helper function to get wind direction name
     function getWindDirection(degrees) {
@@ -1119,90 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch Air Quality data
-    function fetchAirQuality(lat, lon) {
-        const url = `https://air-quality.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm10,pm2_5,european_aqi&timezone=auto&forecast_days=3`;
-        
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.hourly) {
-                    const currentAQI = data.hourly.european_aqi[0];
-                    const currentPM25 = data.hourly.pm2_5[0];
-                    const currentPM10 = data.hourly.pm10[0];
-                    const aqiLevel = getAQILevel(currentAQI);
-                    
-                    document.getElementById('aqi-current').textContent = Math.round(currentAQI);
-                    document.getElementById('pm25').textContent = currentPM25.toFixed(1);
-                    document.getElementById('pm10').textContent = currentPM10.toFixed(1);
-                    
-                    const levelBadge = document.getElementById('aqi-level');
-                    levelBadge.textContent = aqiLevel.level;
-                    levelBadge.style.backgroundColor = aqiLevel.color;
-                    
-                    renderAQIChart(data.hourly);
-                }
-            })
-            .catch(err => console.error('Error fetching air quality data:', err));
-    }
 
-    // Render AQI Chart
-    function renderAQIChart(hourlyData) {
-        const ctx = document.getElementById('aqiChart');
-        if (!ctx) return;
-
-        if (aqiChartInstance) aqiChartInstance.destroy();
-
-        // Show every 6 hours for readability
-        const labels = [];
-        const aqiValues = [];
-        for (let i = 0; i < Math.min(48, hourlyData.time.length); i += 6) {
-            const d = new Date(hourlyData.time[i]);
-            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
-            aqiValues.push(hourlyData.european_aqi[i]);
-        }
-
-        aqiChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'European AQI',
-                    data: aqiValues,
-                    borderColor: '#00bcd4',
-                    backgroundColor: 'rgba(0, 188, 212, 0.2)',
-                    borderWidth: 3,
-                    pointBackgroundColor: '#00bcd4',
-                    pointRadius: 4,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.7)',
-                        titleColor: 'white',
-                        bodyColor: 'white'
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: 'rgba(255,255,255,0.7)' },
-                        grid: { color: 'rgba(255,255,255,0.1)' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: 'rgba(255,255,255,0.7)' },
-                        grid: { color: 'rgba(255,255,255,0.1)' }
-                    }
-                }
-            }
-        });
-    }
 
     // Fetch Pressure data
     function fetchPressureData(lat, lon) {
@@ -1482,6 +1391,586 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ========== EXTENDED METEOROLOGICAL DATA ==========
+    // Additional chart instances
+    let visibilityChartInstance = null;
+    let dewpointChartInstance = null;
+    let apparentTempChartInstance = null;
+    let cloudCoverChartInstance = null;
+    let solarChartInstance = null;
+    let snowChartInstance = null;
+    let pollenChartInstance = null;
+
+    // Fetch Visibility data
+    function fetchVisibility(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=visibility&timezone=auto&forecast_days=3`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const currentVis = data.hourly.visibility[0] / 1000; // Convert m to km
+                    document.getElementById('visibility-current').textContent = `${currentVis.toFixed(1)} km`;
+                    
+                    // Visibility levels
+                    let level, color;
+                    if (currentVis >= 10) {
+                        level = 'Výborná';
+                        color = '#4caf50';
+                    } else if (currentVis >= 4) {
+                        level = 'Dobrá';
+                        color = '#ffeb3b';
+                    } else if (currentVis >= 1) {
+                        level = 'Mírná';
+                        color = '#ff9e42';
+                    } else {
+                        level = 'Špatná';
+                        color = '#f44336';
+                    }
+                    
+                    const badge = document.getElementById('visibility-level');
+                    badge.textContent = level;
+                    badge.style.backgroundColor = color;
+                    
+                    renderVisibilityChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching visibility data:', err));
+    }
+
+    function renderVisibilityChart(hourlyData) {
+        const ctx = document.getElementById('visibilityChart');
+        if (!ctx) return;
+        if (visibilityChartInstance) visibilityChartInstance.destroy();
+
+        const labels = [];
+        const visValues = [];
+        for (let i = 0; i < Math.min(48, hourlyData.time.length); i += 3) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+            visValues.push(hourlyData.visibility[i] / 1000);
+        }
+
+        visibilityChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Viditelnost (km)',
+                    data: visValues,
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Dew Point data
+    function fetchDewPoint(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=dewpoint_2m,temperature_2m&timezone=auto&forecast_days=3`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const currentDew = data.hourly.dewpoint_2m[0];
+                    const currentTemp = data.hourly.temperature_2m[0];
+                    
+                    document.getElementById('dewpoint-current').textContent = `${currentDew.toFixed(1)}°C`;
+                    document.getElementById('actual-temp').textContent = currentTemp.toFixed(1);
+                    
+                    // Comfort levels based on dew point
+                    let comfort, color;
+                    if (currentDew < 10) {
+                        comfort = 'Suché';
+                        color = '#00bcd4';
+                    } else if (currentDew < 13) {
+                        comfort = 'Velmi příjemné';
+                        color = '#4caf50';
+                    } else if (currentDew < 16) {
+                        comfort = 'Příjemné';
+                        color = '#8bc34a';
+                    } else if (currentDew < 18) {
+                        comfort = 'Pohodlné';
+                        color = '#ffeb3b';
+                    } else if (currentDew < 21) {
+                        comfort = 'Dusné';
+                        color = '#ff9e42';
+                    } else {
+                        comfort = 'Velmi dusné';
+                        color = '#f44336';
+                    }
+                    
+                    const badge = document.getElementById('dewpoint-comfort');
+                    badge.textContent = comfort;
+                    badge.style.backgroundColor = color;
+                    
+                    renderDewPointChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching dew point data:', err));
+    }
+
+    function renderDewPointChart(hourlyData) {
+        const ctx = document.getElementById('dewpointChart');
+        if (!ctx) return;
+        if (dewpointChartInstance) dewpointChartInstance.destroy();
+
+        const labels = [];
+        const dewValues = [];
+        const tempValues = [];
+        for (let i = 0; i < Math.min(48, hourlyData.time.length); i += 3) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+            dewValues.push(hourlyData.dewpoint_2m[i]);
+            tempValues.push(hourlyData.temperature_2m[i]);
+        }
+
+        dewpointChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rosný bod (°C)',
+                    data: dewValues,
+                    borderColor: '#00bcd4',
+                    backgroundColor: 'rgba(0, 188, 212, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Teplota (°C)',
+                    data: tempValues,
+                    borderColor: '#ff9e42',
+                    backgroundColor: 'rgba(255, 158, 66, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, labels: { color: 'rgba(255,255,255,0.9)' } },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Apparent Temperature data
+    function fetchApparentTemp(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=apparent_temperature,temperature_2m&timezone=auto&forecast_days=3`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const apparentTemp = data.hourly.apparent_temperature[0];
+                    const realTemp = data.hourly.temperature_2m[0];
+                    const diff = apparentTemp - realTemp;
+                    
+                    document.getElementById('apparent-temp-current').textContent = `${apparentTemp.toFixed(1)}°C`;
+                    document.getElementById('real-temp').textContent = realTemp.toFixed(1);
+                    document.getElementById('temp-difference').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1);
+                    
+                    renderApparentTempChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching apparent temperature data:', err));
+    }
+
+    function renderApparentTempChart(hourlyData) {
+        const ctx = document.getElementById('apparentTempChart');
+        if (!ctx) return;
+        if (apparentTempChartInstance) apparentTempChartInstance.destroy();
+
+        const labels = [];
+        const apparentValues = [];
+        const realValues = [];
+        for (let i = 0; i < Math.min(48, hourlyData.time.length); i += 3) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+            apparentValues.push(hourlyData.apparent_temperature[i]);
+            realValues.push(hourlyData.temperature_2m[i]);
+        }
+
+        apparentTempChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pocitová (°C)',
+                    data: apparentValues,
+                    borderColor: '#9c27b0',
+                    backgroundColor: 'rgba(156, 39, 176, 0.2)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Skutečná (°C)',
+                    data: realValues,
+                    borderColor: '#ff5722',
+                    backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, labels: { color: 'rgba(255,255,255,0.9)' } },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Cloud Cover data
+    function fetchCloudCover(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high&timezone=auto&forecast_days=2`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const cloudTotal = data.hourly.cloud_cover[0];
+                    const cloudLow = data.hourly.cloud_cover_low[0];
+                    const cloudMid = data.hourly.cloud_cover_mid[0];
+                    const cloudHigh = data.hourly.cloud_cover_high[0];
+                    
+                    document.getElementById('cloud-cover-current').textContent = `${cloudTotal}%`;
+                    document.getElementById('cloud-low').textContent = cloudLow;
+                    document.getElementById('cloud-mid').textContent = cloudMid;
+                    document.getElementById('cloud-high').textContent = cloudHigh;
+                    
+                    renderCloudCoverChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching cloud cover data:', err));
+    }
+
+    function renderCloudCoverChart(hourlyData) {
+        const ctx = document.getElementById('cloudCoverChart');
+        if (!ctx) return;
+        if (cloudCoverChartInstance) cloudCoverChartInstance.destroy();
+
+        const labels = [];
+        const cloudValues = [];
+        for (let i = 0; i < Math.min(24, hourlyData.time.length); i += 2) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }));
+            cloudValues.push(hourlyData.cloud_cover[i]);
+        }
+
+        cloudCoverChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Oblačnost (%)',
+                    data: cloudValues,
+                    borderColor: '#607d8b',
+                    backgroundColor: 'rgba(96, 125, 139, 0.3)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { beginAtZero: true, max: 100, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Solar Radiation data
+    function fetchSolarRadiation(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=shortwave_radiation,direct_radiation&timezone=auto&forecast_days=2`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const currentSolar = data.hourly.shortwave_radiation[0];
+                    const currentDirect = data.hourly.direct_radiation[0];
+                    
+                    document.getElementById('solar-current').textContent = `${Math.round(currentSolar)} W/m²`;
+                    document.getElementById('solar-direct').textContent = Math.round(currentDirect);
+                    
+                    // Solar potential
+                    let potential, color;
+                    if (currentSolar > 800) {
+                        potential = 'Výborná';
+                        color = '#ffc107';
+                    } else if (currentSolar > 400) {
+                        potential = 'Dobrá';
+                        color = '#ff9e42';
+                    } else if (currentSolar > 100) {
+                        potential = 'Mírná';
+                        color = '#ff5722';
+                    } else {
+                        potential = 'Nízká';
+                        color = '#607d8b';
+                    }
+                    
+                    const badge = document.getElementById('solar-potential');
+                    badge.textContent = potential;
+                    badge.style.backgroundColor = color;
+                    
+                    renderSolarChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching solar radiation data:', err));
+    }
+
+    function renderSolarChart(hourlyData) {
+        const ctx = document.getElementById('solarChart');
+        if (!ctx) return;
+        if (solarChartInstance) solarChartInstance.destroy();
+
+        const labels = [];
+        const solarValues = [];
+        for (let i = 0; i < Math.min(24, hourlyData.time.length); i += 1) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleTimeString('cs-CZ', { hour: '2-digit' }));
+            solarValues.push(hourlyData.shortwave_radiation[i]);
+        }
+
+        solarChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Záření (W/m²)',
+                    data: solarValues,
+                    backgroundColor: 'rgba(255, 193, 7, 0.6)',
+                    borderColor: '#ffc107',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Snow Depth data
+    function fetchSnowDepth(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=snowfall_sum&hourly=snow_depth&timezone=auto&forecast_days=7`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly && data.daily) {
+                    const currentSnowDepth = data.hourly.snow_depth[0];
+                    const newSnow = data.daily.snowfall_sum[0];
+                    
+                    document.getElementById('snow-depth-current').textContent = currentSnowDepth > 0 ? `${currentSnowDepth.toFixed(0)} cm` : '0 cm';
+                    document.getElementById('snow-new').textContent = newSnow > 0 ? `${newSnow.toFixed(1)} cm` : '0 cm';
+                    
+                    renderSnowChart(data.daily);
+                }
+            })
+            .catch(err => console.error('Error fetching snow data:', err));
+    }
+
+    function renderSnowChart(dailyData) {
+        const ctx = document.getElementById('snowChart');
+        if (!ctx) return;
+        if (snowChartInstance) snowChartInstance.destroy();
+
+        const labels = dailyData.time.map(date => {
+            const d = new Date(date);
+            return d.toLocaleDateString('cs-CZ', { weekday: 'short', day: 'numeric' });
+        });
+
+        snowChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sněžení (cm)',
+                    data: dailyData.snowfall_sum,
+                    backgroundColor: 'rgba(0, 188, 212, 0.6)',
+                    borderColor: '#00bcd4',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
+    // Fetch Pollen data
+    function fetchPollenData(lat, lon) {
+        const url = `https://air-quality.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=alder_pollen,birch_pollen,grass_pollen,olive_pollen,ragweed_pollen&timezone=auto&forecast_days=3`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const birch = data.hourly.birch_pollen[0] || 0;
+                    const grass = data.hourly.grass_pollen[0] || 0;
+                    const olive = data.hourly.olive_pollen[0] || 0;
+                    const ragweed = data.hourly.ragweed_pollen[0] || 0;
+                    
+                    // Helper to get pollen level text
+                    const getPollenLevel = (val) => {
+                        if (val === 0) return 'Žádné';
+                        if (val < 20) return 'Nízké';
+                        if (val < 50) return 'Mírné';
+                        if (val < 100) return 'Vysoké';
+                        return 'Velmi vysoké';
+                    };
+                    
+                    document.getElementById('pollen-birch').textContent = getPollenLevel(birch);
+                    document.getElementById('pollen-grass').textContent = getPollenLevel(grass);
+                    document.getElementById('pollen-olive').textContent = getPollenLevel(olive);
+                    document.getElementById('pollen-ragweed').textContent = getPollenLevel(ragweed);
+                    
+                    // Overall level
+                    const maxPollen = Math.max(birch, grass, olive, ragweed);
+                    const overallLevel = getPollenLevel(maxPollen);
+                    let color;
+                    if (maxPollen === 0) color = '#4caf50';
+                    else if (maxPollen < 20) color = '#8bc34a';
+                    else if (maxPollen < 50) color = '#ffeb3b';
+                    else if (maxPollen < 100) color = '#ff9e42';
+                    else color = '#f44336';
+                    
+                    const badge = document.getElementById('pollen-level');
+                    badge.textContent = overallLevel;
+                    badge.style.backgroundColor = color;
+                    
+                    renderPollenChart(data.hourly);
+                }
+            })
+            .catch(err => console.error('Error fetching pollen data:', err));
+    }
+
+    function renderPollenChart(hourlyData) {
+        const ctx = document.getElementById('pollenChart');
+        if (!ctx) return;
+        if (pollenChartInstance) pollenChartInstance.destroy();
+
+        const labels = [];
+        const birchValues = [];
+        const grassValues = [];
+        const oliveValues = [];
+        const ragweedValues = [];
+        
+        for (let i = 0; i < Math.min(72, hourlyData.time.length); i += 6) {
+            const d = new Date(hourlyData.time[i]);
+            labels.push(d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit' }));
+            birchValues.push(hourlyData.birch_pollen[i] || 0);
+            grassValues.push(hourlyData.grass_pollen[i] || 0);
+            oliveValues.push(hourlyData.olive_pollen[i] || 0);
+            ragweedValues.push(hourlyData.ragweed_pollen[i] || 0);
+        }
+
+        pollenChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Bříza',
+                    data: birchValues,
+                    borderColor: '#8bc34a',
+                    backgroundColor: 'rgba(139, 195, 74, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }, {
+                    label: 'Tráva',
+                    data: grassValues,
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }, {
+                    label: 'Oliva',
+                    data: oliveValues,
+                    borderColor: '#ff9e42',
+                    backgroundColor: 'rgba(255, 158, 66, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }, {
+                    label: 'Ambrózie',
+                    data: ragweedValues,
+                    borderColor: '#f44336',
+                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, labels: { color: 'rgba(255,255,255,0.9)' } },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                },
+                scales: {
+                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
+    }
+
     // Initialize all advanced weather data
     function initAdvancedWeatherData(lat, lon, name) {
         const titleElement = document.querySelector('h1.fw-light');
@@ -1489,11 +1978,21 @@ document.addEventListener('DOMContentLoaded', () => {
             titleElement.textContent = `Další meteorologická data - ${name}`;
         }
         
+        // Original 5 sections
         fetchUVIndex(lat, lon);
-        fetchAirQuality(lat, lon);
+
         fetchPressureData(lat, lon);
         fetchRainfallData(lat, lon);
         fetchWindData(lat, lon);
+        
+        // New 7 sections
+        fetchVisibility(lat, lon);
+        fetchDewPoint(lat, lon);
+        fetchApparentTemp(lat, lon);
+        fetchCloudCover(lat, lon);
+        fetchSolarRadiation(lat, lon);
+        fetchSnowDepth(lat, lon);
+        fetchPollenData(lat, lon);
     }
 
     // Search logic for Advanced Data Page
