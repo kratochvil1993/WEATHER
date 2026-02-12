@@ -397,6 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const historySearchInput = document.getElementById('history-search-input');
     const historySearchButton = document.getElementById('history-search-button');
     const historySuggestionsList = document.getElementById('history-suggestions-list');
+
+    // Search logic for Statistics Page
+    const statsSearchInput = document.getElementById('stats-search-input');
+    const statsSearchButton = document.getElementById('stats-search-button');
+    const statsSuggestionsList = document.getElementById('stats-suggestions-list');
     
     let debounceTimer;
     let chartInstanceMean = null;
@@ -954,6 +959,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300));
     }
 
+    // Statistics Search Listeners (Statistiky Page)
+    if (statsSearchButton) {
+        statsSearchButton.addEventListener('click', () => handleSearch(statsSearchInput, 'stats'));
+    }
+
+    if (statsSearchInput) {
+        statsSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch(statsSearchInput, 'stats');
+        });
+
+        statsSearchInput.addEventListener('input', debounce((e) => {
+            fetchSuggestions(e.target.value.trim(), 'stats');
+        }, 300));
+    }
+
     // Close suggestions on click outside
     document.addEventListener('click', (e) => {
         // Main page suggestions
@@ -966,6 +986,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (historySearchInput && historySuggestionsList) {
             if (!historySearchInput.contains(e.target) && !historySuggestionsList.contains(e.target)) {
                 historySuggestionsList.classList.add('d-none');
+            }
+        }
+        // Statistics page suggestions
+        if (statsSearchInput && statsSuggestionsList) {
+            if (!statsSearchInput.contains(e.target) && !statsSuggestionsList.contains(e.target)) {
+                statsSuggestionsList.classList.add('d-none');
             }
         }
     });
@@ -1399,7 +1425,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let cloudCoverChartInstance = null;
     let solarChartInstance = null;
     let snowChartInstance = null;
-    let pollenChartInstance = null;
+
+    // Statistics page chart instances
+    let statsWeeklyChartInstance = null;
+    let statsNormalChartInstance = null;
+    let statsHistoryChartInstance = null;
 
     // Fetch Visibility data
     function fetchVisibility(lat, lon) {
@@ -1855,121 +1885,258 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch Pollen data
-    function fetchPollenData(lat, lon) {
-        const url = `https://air-quality.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=alder_pollen,birch_pollen,grass_pollen,olive_pollen,ragweed_pollen&timezone=auto&forecast_days=3`;
-        
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.hourly) {
-                    const birch = data.hourly.birch_pollen[0] || 0;
-                    const grass = data.hourly.grass_pollen[0] || 0;
-                    const olive = data.hourly.olive_pollen[0] || 0;
-                    const ragweed = data.hourly.ragweed_pollen[0] || 0;
-                    
-                    // Helper to get pollen level text
-                    const getPollenLevel = (val) => {
-                        if (val === 0) return 'Žádné';
-                        if (val < 20) return 'Nízké';
-                        if (val < 50) return 'Mírné';
-                        if (val < 100) return 'Vysoké';
-                        return 'Velmi vysoké';
-                    };
-                    
-                    document.getElementById('pollen-birch').textContent = getPollenLevel(birch);
-                    document.getElementById('pollen-grass').textContent = getPollenLevel(grass);
-                    document.getElementById('pollen-olive').textContent = getPollenLevel(olive);
-                    document.getElementById('pollen-ragweed').textContent = getPollenLevel(ragweed);
-                    
-                    // Overall level
-                    const maxPollen = Math.max(birch, grass, olive, ragweed);
-                    const overallLevel = getPollenLevel(maxPollen);
-                    let color;
-                    if (maxPollen === 0) color = '#4caf50';
-                    else if (maxPollen < 20) color = '#8bc34a';
-                    else if (maxPollen < 50) color = '#ffeb3b';
-                    else if (maxPollen < 100) color = '#ff9e42';
-                    else color = '#f44336';
-                    
-                    const badge = document.getElementById('pollen-level');
-                    badge.textContent = overallLevel;
-                    badge.style.backgroundColor = color;
-                    
-                    renderPollenChart(data.hourly);
-                }
-            })
-            .catch(err => console.error('Error fetching pollen data:', err));
+    // ========== STATISTICS PAGE HELPERS ==========
+
+    function updateStatsDailySummary(daily) {
+        const min = daily.temperature_2m_min[0];
+        const max = daily.temperature_2m_max[0];
+        const rain = daily.precipitation_sum[0];
+        const uv = daily.uv_index_max[0];
+
+        const tempMinEl = document.getElementById('stats-temp-min');
+        const tempMaxEl = document.getElementById('stats-temp-max');
+        const rainEl = document.getElementById('stats-rain-today');
+        const uvMaxEl = document.getElementById('stats-uv-max');
+        const uvLevelEl = document.getElementById('stats-uv-level');
+
+        if (tempMinEl) tempMinEl.textContent = `${min.toFixed(1)}°C`;
+        if (tempMaxEl) tempMaxEl.textContent = `${max.toFixed(1)}°C`;
+        if (rainEl) rainEl.textContent = `${rain.toFixed(1)} mm`;
+
+        if (uvMaxEl && uvLevelEl) {
+            uvMaxEl.textContent = uv.toFixed(1);
+            const level = getUVLevel(uv);
+            uvLevelEl.textContent = level.level;
+            uvLevelEl.style.backgroundColor = level.color;
+        }
     }
 
-    function renderPollenChart(hourlyData) {
-        const ctx = document.getElementById('pollenChart');
+    function renderStatsWeeklyChart(daily) {
+        const ctx = document.getElementById('stats-weekly-chart');
         if (!ctx) return;
-        if (pollenChartInstance) pollenChartInstance.destroy();
+        if (statsWeeklyChartInstance) statsWeeklyChartInstance.destroy();
 
+        const daysCount = Math.min(7, daily.time.length);
         const labels = [];
-        const birchValues = [];
-        const grassValues = [];
-        const oliveValues = [];
-        const ragweedValues = [];
-        
-        for (let i = 0; i < Math.min(72, hourlyData.time.length); i += 6) {
-            const d = new Date(hourlyData.time[i]);
-            labels.push(d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', hour: '2-digit' }));
-            birchValues.push(hourlyData.birch_pollen[i] || 0);
-            grassValues.push(hourlyData.grass_pollen[i] || 0);
-            oliveValues.push(hourlyData.olive_pollen[i] || 0);
-            ragweedValues.push(hourlyData.ragweed_pollen[i] || 0);
+        const maxTemps = [];
+        const minTemps = [];
+        const rains = [];
+
+        for (let i = 0; i < daysCount; i++) {
+            const d = new Date(daily.time[i]);
+            labels.push(d.toLocaleDateString('cs-CZ', { weekday: 'short', day: 'numeric' }));
+            maxTemps.push(daily.temperature_2m_max[i]);
+            minTemps.push(daily.temperature_2m_min[i]);
+            rains.push(daily.precipitation_sum[i]);
         }
 
-        pollenChartInstance = new Chart(ctx, {
+        statsWeeklyChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels,
+                datasets: [
+                    {
+                        label: 'Max (°C)',
+                        data: maxTemps,
+                        borderColor: '#ff9e42',
+                        backgroundColor: 'rgba(255, 158, 66, 0.2)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Min (°C)',
+                        data: minTemps,
+                        borderColor: '#00bcd4',
+                        backgroundColor: 'rgba(0, 188, 212, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: false
+                    },
+                    {
+                        label: 'Srážky (mm)',
+                        data: rains,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: 'rgba(255,255,255,0.9)' } },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        titleColor: 'white',
+                        bodyColor: 'white'
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y1: {
+                        position: 'right',
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderStatsNormalChart(daily) {
+        const ctx = document.getElementById('stats-normal-chart');
+        if (!ctx) return;
+        if (statsNormalChartInstance) statsNormalChartInstance.destroy();
+
+        const len = daily.time.length;
+        if (!len) return;
+
+        const last7Count = Math.min(7, len);
+        const last30Count = Math.min(30, len);
+
+        let sum7 = 0;
+        for (let i = 0; i < last7Count; i++) {
+            sum7 += daily.temperature_2m_max[i];
+        }
+        const avg7 = sum7 / last7Count;
+
+        let sum30 = 0;
+        for (let i = 0; i < last30Count; i++) {
+            sum30 += daily.temperature_2m_max[i];
+        }
+        const avg30 = sum30 / last30Count;
+
+        statsNormalChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Posledních 7 dní', 'Posledních 30 dní'],
                 datasets: [{
-                    label: 'Bříza',
-                    data: birchValues,
-                    borderColor: '#8bc34a',
-                    backgroundColor: 'rgba(139, 195, 74, 0.2)',
-                    borderWidth: 2,
-                    tension: 0.4
-                }, {
-                    label: 'Tráva',
-                    data: grassValues,
-                    borderColor: '#4caf50',
-                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                    borderWidth: 2,
-                    tension: 0.4
-                }, {
-                    label: 'Oliva',
-                    data: oliveValues,
-                    borderColor: '#ff9e42',
-                    backgroundColor: 'rgba(255, 158, 66, 0.2)',
-                    borderWidth: 2,
-                    tension: 0.4
-                }, {
-                    label: 'Ambrózie',
-                    data: ragweedValues,
-                    borderColor: '#f44336',
-                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
-                    borderWidth: 2,
-                    tension: 0.4
+                    label: 'Průměrná max. teplota (°C)',
+                    data: [avg7, avg30],
+                    backgroundColor: ['rgba(255, 158, 66, 0.7)', 'rgba(0, 188, 212, 0.7)'],
+                    borderColor: ['#ff9e42', '#00bcd4'],
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true, labels: { color: 'rgba(255,255,255,0.9)' } },
-                    tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: 'white', bodyColor: 'white' }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        titleColor: 'white',
+                        bodyColor: 'white'
+                    }
                 },
                 scales: {
-                    x: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                    y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    }
                 }
             }
         });
     }
+
+    function renderStatsHistoryChart(daily) {
+        const ctx = document.getElementById('stats-history-chart');
+        if (!ctx) return;
+        if (statsHistoryChartInstance) statsHistoryChartInstance.destroy();
+
+        const len = daily.time.length;
+        if (!len) return;
+
+        const take = Math.min(30, len);
+        const start = len - take;
+
+        const labels = [];
+        const meanTemps = [];
+        const rains = [];
+
+        for (let i = start; i < len; i++) {
+            const d = new Date(daily.time[i]);
+            labels.push(d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }));
+            const min = daily.temperature_2m_min[i];
+            const max = daily.temperature_2m_max[i];
+            meanTemps.push((min + max) / 2);
+            rains.push(daily.precipitation_sum[i]);
+        }
+
+        statsHistoryChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Průměrná teplota (°C)',
+                        data: meanTemps,
+                        borderColor: '#ffffff',
+                        backgroundColor: 'rgba(255,255,255,0.15)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Srážky (mm)',
+                        data: rains,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: 'rgba(255,255,255,0.9)' } },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        titleColor: 'white',
+                        bodyColor: 'white'
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y: {
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    y1: {
+                        position: 'right',
+                        ticks: { color: 'rgba(255,255,255,0.7)' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    }
+
+
 
     // Initialize all advanced weather data
     function initAdvancedWeatherData(lat, lon, name) {
@@ -1992,7 +2159,43 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchCloudCover(lat, lon);
         fetchSolarRadiation(lat, lon);
         fetchSnowDepth(lat, lon);
-        fetchPollenData(lat, lon);
+    }
+
+    // Initialize Statistics page data
+    function initStatsData(lat, lon, name) {
+        const titleElement = document.querySelector('h1.fw-light');
+        if (titleElement && titleElement.textContent.includes('Statistiky')) {
+            titleElement.textContent = `📊 Statistiky & trendy - ${name}`;
+        }
+
+        const loadingEl = document.getElementById('stats-loading');
+        const errorEl = document.getElementById('stats-error');
+        if (loadingEl) loadingEl.classList.remove('d-none');
+        if (errorEl) errorEl.classList.add('d-none');
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max&timezone=auto&past_days=30&forecast_days=7`;
+
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error('Data fetch failed');
+                return res.json();
+            })
+            .then(data => {
+                const daily = data.daily;
+                if (!daily) throw new Error('Missing daily data');
+
+                updateStatsDailySummary(daily);
+                renderStatsWeeklyChart(daily);
+                renderStatsNormalChart(daily);
+                renderStatsHistoryChart(daily);
+
+                if (loadingEl) loadingEl.classList.add('d-none');
+            })
+            .catch(err => {
+                console.error('Error fetching stats data:', err);
+                if (loadingEl) loadingEl.classList.add('d-none');
+                if (errorEl) errorEl.classList.remove('d-none');
+            });
     }
 
     // Search logic for Advanced Data Page
@@ -2014,13 +2217,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300));
     }
 
-    // Update handleSearch to support advanced page
+    // Update handleSearch to support advanced & statistics pages
     const originalHandleSearch = handleSearch;
     handleSearch = function(inputElement, isHistory) {
         const query = inputElement ? inputElement.value.trim() : '';
         if (!query) return;
 
-        const suggestionsElement = isHistory === 'advanced' ? advancedSuggestionsList : (isHistory ? historySuggestionsList : suggestionsList);
+        const suggestionsElement =
+            isHistory === 'advanced'
+                ? advancedSuggestionsList
+                : isHistory === 'stats'
+                    ? statsSuggestionsList
+                    : (isHistory ? historySuggestionsList : suggestionsList);
         
         // Hide suggestions
         if (suggestionsElement) suggestionsElement.classList.add('d-none');
@@ -2040,6 +2248,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isHistory === 'advanced') {
                         initAdvancedWeatherData(lat, lon, name);
+                    } else if (isHistory === 'stats') {
+                        initStatsData(lat, lon, name);
                     } else if (isHistory) {
                         fetchHistoricalData(lat, lon, name);
                     } else {
@@ -2059,11 +2269,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
-    // Update fetchSuggestions to support advanced page
+    // Update fetchSuggestions to support advanced & statistics pages
     const originalFetchSuggestions = fetchSuggestions;
     fetchSuggestions = function(query, isHistory) {
-        const inputElement = isHistory === 'advanced' ? advancedSearchInput : (isHistory ? historySearchInput : searchInput);
-        const suggestionsElement = isHistory === 'advanced' ? advancedSuggestionsList : (isHistory ? historySuggestionsList : suggestionsList);
+        const inputElement =
+            isHistory === 'advanced'
+                ? advancedSearchInput
+                : isHistory === 'stats'
+                    ? statsSearchInput
+                    : (isHistory ? historySearchInput : searchInput);
+
+        const suggestionsElement =
+            isHistory === 'advanced'
+                ? advancedSuggestionsList
+                : isHistory === 'stats'
+                    ? statsSuggestionsList
+                    : (isHistory ? historySuggestionsList : suggestionsList);
 
         if (!suggestionsElement) return;
         
@@ -2101,6 +2322,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                            if (isHistory === 'advanced') {
                                initAdvancedWeatherData(place.latitude, place.longitude, place.name);
+                           } else if (isHistory === 'stats') {
+                               initStatsData(place.latitude, place.longitude, place.name);
                            } else if (isHistory) {
                                fetchHistoricalData(place.latitude, place.longitude, place.name);
                            } else {
@@ -2134,5 +2357,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial load for Advanced Data page
     if (document.getElementById('advanced-content')) {
         initAdvancedWeatherData(49.7475, 13.3776, 'Plzeň');
+    }
+
+    // Initial load for Statistics page
+    if (document.getElementById('stats-content')) {
+        initStatsData(49.7475, 13.3776, 'Plzeň');
     }
 });

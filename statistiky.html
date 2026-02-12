@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiky &amp; trendy - Počasí</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="video-background">
+        <!-- Optional: Video or Image Background -->
+        <div class="overlay"></div>
+    </div>
+
+    <!-- Side Menu Button -->
+    <button class="menu-toggle btn btn-glass icon-only position-fixed top-0 start-0 m-3" id="menu-toggle"
+        aria-label="Menu" style="z-index: 1050;">
+        <i class="bi bi-list fs-4"></i>
+    </button>
+
+    <!-- Side Navigation Panel -->
+    <div class="side-panel glass" id="side-panel">
+        <div class="d-flex justify-content-end p-3">
+            <button class="btn btn-sm btn-glass icon-only" id="menu-close" aria-label="Zavřít menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <nav class="nav flex-column p-4">
+            <a class="nav-link text-white fs-5 mb-3" href="index.html">
+                <i class="bi bi-house-door me-2"></i> Úvod
+            </a>
+            <a class="nav-link text-white fs-5 mb-3" href="teploty.html">
+                <i class="bi bi-thermometer-half me-2"></i> Teploty
+            </a>
+            <a class="nav-link text-white fs-5 mb-3" href="dalsi-data.html">
+                <i class="bi bi-cloud-sun me-2"></i> Další data
+            </a>
+            <a class="nav-link text-white fs-5 mb-3 active-link" href="statistiky.html">
+                <i class="bi bi-graph-up-arrow me-2"></i> Statistiky &amp; trendy
+            </a>
+        </nav>
+    </div>
+
+    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5">
+        <div class="row w-100 justify-content-center">
+            <div class="col-lg-10">
+                <div class="glass p-4 p-md-5 text-white h-100">
+                    <h1 class="mb-4 fw-light text-center">
+                        <i class="bi bi-graph-up-arrow me-2"></i>Statistiky &amp; trendy
+                    </h1>
+
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8 position-relative">
+                            <div class="input-group">
+                                <input type="text" id="stats-search-input" class="form-control glass-input text-white"
+                                    placeholder="Vyhledejte místo pro zobrazení statistik..." aria-label="Hledat místo"
+                                    autocomplete="off">
+                                <button class="btn btn-glass" type="button" id="stats-search-button">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <div id="stats-suggestions-list" class="suggestions-container d-none"></div>
+                        </div>
+                    </div>
+
+                    <div id="stats-content" class="fade-in">
+                        <!-- Denní souhrn -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-3 fw-light d-flex flex-column section-title">
+                                    <span class="d-flex align-items-center">
+                                        <i class="bi bi-clipboard-data me-2"></i>
+                                        <span>Denní souhrn</span>
+                                    </span>
+                                    <small class="d-block text-white-50 fs-6">Min/max teplota, srážky, UV index</small>
+                                </h2>
+                                <div class="row g-4">
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Teplota dnes</p>
+                                            <div class="d-flex justify-content-center gap-4">
+                                                <div>
+                                                    <p class="mb-1 x-small text-uppercase opacity-75">Min</p>
+                                                    <p class="h3 fw-bold mb-0" id="stats-temp-min">--</p>
+                                                </div>
+                                                <div>
+                                                    <p class="mb-1 x-small text-uppercase opacity-75">Max</p>
+                                                    <p class="h3 fw-bold mb-0" id="stats-temp-max">--</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Srážky dnes</p>
+                                            <p class="h2 fw-bold mb-1" id="stats-rain-today">--</p>
+                                            <p class="small opacity-75 mb-0">Celkový úhrn za posledních 24 hodin</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="glass-light p-4 rounded text-center h-100">
+                                            <p class="mb-2 small text-uppercase opacity-75">Maximální UV index</p>
+                                            <p class="display-5 fw-bold mb-2" id="stats-uv-max">--</p>
+                                            <span class="badge rounded-pill px-3 py-2" id="stats-uv-level">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Týdenní předpověď -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-3 fw-light d-flex align-items-center section-title">
+                                    <i class="bi bi-calendar-week me-2"></i>
+                                    <span>Týdenní předpověď</span>
+                                </h2>
+                                <p class="text-white-50 mb-3">
+                                    Přehled počasí na 7 dní dopředu – jak se budou vyvíjet teploty, srážky a UV index.
+                                </p>
+                                <div class="glass-light p-4 rounded h-100">
+                                    <div class="chart-container" style="height: 280px;">
+                                        <canvas id="stats-weekly-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Srovnání s normálem -->
+                        <div class="row mb-5">
+                            <div class="col-12">
+                                <h2 class="mb-3 fw-light d-flex align-items-center section-title">
+                                    <i class="bi bi-arrow-repeat me-2"></i>
+                                    <span>Srovnání s normálem</span>
+                                </h2>
+                                <p class="text-white-50 mb-3">
+                                    Jak se aktuální období liší od dlouhodobého průměru – jednoduché vizuální
+                                    srovnání pro rychlou orientaci.
+                                </p>
+                                <div class="glass-light p-4 rounded h-100">
+                                    <div class="chart-container" style="height: 280px;">
+                                        <canvas id="stats-normal-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Historický trend -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h2 class="mb-3 fw-light d-flex align-items-center section-title">
+                                    <i class="bi bi-graph-down me-2"></i>
+                                    <span>Historický trend</span>
+                                </h2>
+                                <p class="text-white-50 mb-3">
+                                    Graf posledních 30 dnů – vývoj teplot a srážek v čase.
+                                </p>
+                                <div class="glass-light p-4 rounded h-100">
+                                    <div class="chart-container" style="height: 280px;">
+                                        <canvas id="stats-history-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="stats-loading" class="text-center d-none mt-4">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Načítání statistik...</span>
+                            </div>
+                        </div>
+                        <div id="stats-error" class="alert alert-danger d-none mt-3" role="alert">
+                            Nepodařilo se načíst statistiky pro zvolené místo.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+
+</html>

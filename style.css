@@ -1,369 +1,388 @@
 /* Global Styles */
 body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Fallback gradient */
-    min-height: 100vh;
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: linear-gradient(
+    135deg,
+    #1e3c72 0%,
+    #2a5298 100%
+  ); /* Fallback gradient */
+  min-height: 100vh;
 }
 
 /* Background Container */
 .video-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    transition: background-image 1s ease-in-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 1s ease-in-out;
 }
 
 .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4); /* Dark overlay for readability */
-    z-index: -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Dark overlay for readability */
+  z-index: -1;
 }
 
 /* Glassmorphism Card */
 .glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    width: 100%;
-    width: 100%;
-    transition: transform 0.3s ease;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  width: 100%;
+  width: 100%;
+  transition: transform 0.3s ease;
 }
 
 .glass:hover {
-    transform: translateY(-5px);
+  transform: translateY(-5px);
 }
 
 /* Inner Glass Elements */
 .glass-light {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: background 0.3s ease;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.3s ease;
 }
 
 .glass-light:hover {
-    background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Typography & Icons */
 h1 {
-    letter-spacing: 1px;
+  letter-spacing: 1px;
+}
+
+.section-title {
+  line-height: 1.1;
+  overflow: hidden;
+}
+
+.section-title i {
+  font-size: 0.9em;
+  line-height: 1;
 }
 
 .display-1 {
-    font-size: 5rem;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  font-size: 5rem;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .stat-item i {
-    color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Animations */
 .fade-in {
-    animation: fadeIn 1s ease-in-out;
+  animation: fadeIn 1s ease-in-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Loader */
 .spinner-border {
-    width: 3rem;
-    height: 3rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 /* Custom Nav Pills */
 .nav-pills .nav-link {
-    color: rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 10px 15px;
-    transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 15px;
+  transition: all 0.3s ease;
 }
 
 .nav-pills .nav-link:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .nav-pills .nav-link.active {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: #fff;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .forecast-icon {
-    font-size: 4rem;
+  font-size: 4rem;
 }
 
 .forecast-temp {
-    font-size: 3rem;
-    font-weight: 700;
+  font-size: 3rem;
+  font-weight: 700;
 }
 
 /* Hourly Forecast Scroll */
 .hourly-scroll {
-    display: flex;
-    /* overflow-x: auto; */
-    overflow-x: hidden;
-    gap: 1.5rem;
-    padding-bottom: 1rem;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-    cursor: grab;
-    user-select: none;
+  display: flex;
+  /* overflow-x: auto; */
+  overflow-x: hidden;
+  gap: 1.5rem;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  cursor: grab;
+  user-select: none;
 }
 
 .hourly-scroll.active {
-    cursor: grabbing;
-    cursor: -webkit-grabbing;
+  cursor: grabbing;
+  cursor: -webkit-grabbing;
 }
 
 .hourly-scroll::-webkit-scrollbar {
-    height: 8px;
+  height: 8px;
 }
 
 .hourly-scroll::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .hourly-scroll::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
 }
 
 .hourly-item {
-    min-width: 100px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 1.5rem 1rem;
-    transition: background 0.3s ease;
+  min-width: 100px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem 1rem;
+  transition: background 0.3s ease;
 }
 
 .hourly-item:hover {
-    background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Glass Buttons */
 .btn-glass {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
-    padding: 10px 25px;
-    border-radius: 30px; /* Overridden by btn-group but good for standalone */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  padding: 10px 25px;
+  border-radius: 30px; /* Overridden by btn-group but good for standalone */
 }
 
 .btn-group .btn-glass {
-    border-radius: 0;
+  border-radius: 0;
 }
 
 .btn-group .btn-glass:first-child {
-    border-top-left-radius: 30px;
-    border-bottom-left-radius: 30px;
+  border-top-left-radius: 30px;
+  border-bottom-left-radius: 30px;
 }
 
 .btn-group .btn-glass:last-child {
-    border-top-right-radius: 30px;
-    border-bottom-right-radius: 30px;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
 }
 
 .btn-glass:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transform: translateY(-2px);
 }
 
 .btn-glass.active {
-    background: rgba(255, 255, 255, 0.3);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Search Input Styles */
 .glass-input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff !important; /* Force white text */
-    backdrop-filter: blur(5px);
-    border-right: none; /* Merge with button */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff !important; /* Force white text */
+  backdrop-filter: blur(5px);
+  border-right: none; /* Merge with button */
 }
 
 .glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .glass-input:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
 }
 
 /* Fix for input group button */
 .input-group .btn-glass {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
-    z-index: 5; /* Ensure button is clickcable over input focus ring if needed */
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: none;
+  z-index: 5; /* Ensure button is clickcable over input focus ring if needed */
 }
 
 .input-group .glass-input {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-top-left-radius: 30px;
-    border-bottom-left-radius: 30px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 30px;
+  border-bottom-left-radius: 30px;
 }
 
 /* Autocomplete Suggestions */
 .suggestions-container {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: rgba(30, 60, 114, 0.95); /* Darker background for readability */
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
-    margin-top: 5px;
-    z-index: 1000;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(30, 60, 114, 0.95); /* Darker background for readability */
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  margin-top: 5px;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 .suggestion-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
-    transition: background 0.2s;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  transition: background 0.2s;
 }
 
 .suggestion-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .suggestion-item:hover {
-    background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .suggestion-name {
-    display: block;
-    font-weight: 600;
+  display: block;
+  font-weight: 600;
 }
 
 .suggestion-details {
-    display: block;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
+  display: block;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
 }
-
 
 /* Side Panel Navigation */
 .side-panel {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 250px;
-    z-index: 1040;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-    border-radius: 0 20px 20px 0;
-    backdrop-filter: blur(20px);
-    background: rgba(30, 60, 114, 0.95);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 250px;
+  z-index: 1040;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease-in-out;
+  border-radius: 0 20px 20px 0;
+  backdrop-filter: blur(20px);
+  background: rgba(30, 60, 114, 0.95);
 }
 
 .side-panel.open {
-    transform: translateX(0);
+  transform: translateX(0);
 }
 
 .side-panel .nav-link {
-    transition: all 0.2s;
-    border-radius: 10px;
+  transition: all 0.2s;
+  border-radius: 10px;
 }
 
 .side-panel .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
 }
 
 .side-panel .active-link {
-    background: rgba(255, 255, 255, 0.2);
-    font-weight: bold;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: bold;
 }
 
 /* Icon only button adjustments */
 .icon-only {
-    padding: 10px;
-    width: 45px; /* Square-ish */
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50% !important;
+  padding: 10px;
+  width: 45px; /* Square-ish */
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% !important;
 }
 
 #menu-toggle {
-    transition: transform 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 #menu-toggle:hover {
-    transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 /* Weather Map Styles */
 #weather-map {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.2); /* Darker base for map */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2); /* Darker base for map */
 }
 
 /* Customizing Leaflet Controls for Dark Theme */
 .leaflet-container {
-    background: #111 !important;
+  background: #111 !important;
 }
 
 .leaflet-bar {
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .leaflet-bar a {
-    background-color: rgba(30, 60, 114, 0.9) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(30, 60, 114, 0.9) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .leaflet-bar a:hover {
-    background-color: rgba(42, 82, 152, 1) !important;
+  background-color: rgba(42, 82, 152, 1) !important;
 }
 
 .leaflet-control-attribution {
-    background: rgba(0, 0, 0, 0.4) !important;
-    color: rgba(255, 255, 255, 0.6) !important;
-    backdrop-filter: blur(5px);
-    font-size: 10px !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(5px);
+  font-size: 10px !important;
 }
