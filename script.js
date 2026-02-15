@@ -39,39 +39,172 @@ document.addEventListener("DOMContentLoaded", () => {
   const moonPhaseElement = document.getElementById("moon-phase");
   const moonIconElement = document.getElementById("moon-icon");
 
-  // Location Data Configuration
-  const savedLocations = {
+  // Base locations configuration
+  const baseLocations = {
     plzen: {
       lat: 49.7475,
       lon: 13.3776,
       name: "Plzeň",
-      title: "Počasí v Plzni",
-      buttons: ["btn-plzen", "btn-plzen-hist", "btn-plzen-adv", "btn-plzen-stats"]
     },
     krimice: {
       lat: 49.758,
       lon: 13.317,
       name: "Křimice",
-      title: "Počasí Křimice",
-      buttons: ["btn-krimice", "btn-krimice-hist", "btn-krimice-adv", "btn-krimice-stats"]
     },
     cheznovice: {
       lat: 49.7789,
       lon: 13.7854,
       name: "Cheznovice",
-      title: "Počasí v Cheznovicích",
-      buttons: ["btn-cheznovice", "btn-cheznovice-hist", "btn-cheznovice-adv", "btn-cheznovice-stats"]
-    }
+    },
   };
+
+  /**
+   * Načte vlastní uložené lokace z localStorage
+   * @returns {Array} Pole objektů vlastních lokací
+   */
+  function getCustomLocations() {
+    const stored = localStorage.getItem("customLocations");
+    try {
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error("Failed to parse custom locations", e);
+      return [];
+    }
+  }
+
+  /**
+   * Uloží vlastní lokaci (přidá na konec)
+   * @param {Object} location - Objekt s name, lat, lon
+   */
+  function addCustomLocation(location) {
+    const locations = getCustomLocations();
+    // Check for duplicates by name
+    if (
+      !locations.some(
+        (l) => l.name.toLowerCase() === location.name.toLowerCase(),
+      ) &&
+      !baseLocations[location.name.toLowerCase()] // Check against base locations too (simple check)
+    ) {
+      locations.push(location);
+      localStorage.setItem("customLocations", JSON.stringify(locations));
+      renderLocationButtons(); // Re-render buttons
+    } else {
+      alert("Tato lokace již je uložena.");
+    }
+  }
+
+  /**
+   * Odstraní vlastní lokaci podle indexu
+   * @param {number} index - Index v poli customLocations
+   */
+  function removeCustomLocation(index) {
+    if (confirm("Opravdu chcete odebrat tuto lokaci?")) {
+      const locations = getCustomLocations();
+      locations.splice(index, 1);
+      localStorage.setItem("customLocations", JSON.stringify(locations));
+      
+      // If we deleted the currently active location, switch to Plzeň
+      const saved = localStorage.getItem("weatherLocation");
+      if (saved && saved.startsWith("custom-") && parseInt(saved.split("-")[1]) === index) {
+          saveLocation("plzen");
+      }
+      
+      renderLocationButtons();
+    }
+  }
+
+  /**
+   * Vykreslí všechna tlačítka lokací (základní + vlastní) do všech skupin tlačítek
+   */
+  function renderLocationButtons() {
+    const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"]');
+    const customLocs = getCustomLocations();
+    const activeKey = loadStoredLocation();
+
+    groups.forEach((group) => {
+      group.innerHTML = ""; // Clear current buttons
+
+      // 1. Render Base Locations
+      Object.keys(baseLocations).forEach((key) => {
+        const loc = baseLocations[key];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `btn btn-glass ${activeKey === key ? "active" : ""}`;
+        btn.dataset.key = key;
+        btn.dataset.lat = loc.lat;
+        btn.dataset.lon = loc.lon;
+        btn.textContent = loc.name;
+        
+        btn.addEventListener("click", () => handleLocationClick(key, loc));
+        
+        group.appendChild(btn);
+      });
+
+      // 2. Render Custom Locations
+      customLocs.forEach((loc, index) => {
+        const key = `custom-${index}`;
+        
+        // Wrapper for button to position delete trigger nicely if needed, 
+        // but for btn-group bootstrap style, appending button directly is best.
+        // We will handle delete via contextmenu (right click) for simplicity and elegance.
+        
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `btn btn-glass ${activeKey === key ? "active" : ""}`;
+        btn.dataset.key = key;
+        btn.dataset.lat = loc.lat;
+        btn.dataset.lon = loc.lon;
+        btn.dataset.customIndex = index;
+        btn.dataset.customIndex = index;
+        // Add name and delete badge
+        btn.innerHTML = `${loc.name} <span class="ms-2 badge bg-danger rounded-circle p-1 delete-loc" title="Odstranit" style="font-size: 0.6em; vertical-align: middle;"><i class="bi bi-x"></i></span>`;
+        
+        // Handle click (both select and delete checks)
+        btn.addEventListener("click", (e) => {
+            // Check if delete badge was clicked
+            if (e.target.closest(".delete-loc")) {
+                e.stopPropagation();
+                removeCustomLocation(index);
+                return;
+            }
+            handleLocationClick(key, loc);
+        });
+
+        group.appendChild(btn);
+      });
+    });
+  }
+
+  /**
+   * Společná funkce pro kliknutí na tlačítko lokace
+   */
+  function handleLocationClick(key, loc) {
+      saveLocation(key);
+      renderLocationButtons(); // Update active state visually immediately
+      
+      // Determine context and fetch data
+      const isAdvanced = document.getElementById("advanced-content");
+      const isStats = document.getElementById("stats-content");
+      const isHistory = document.getElementById("temperatureChart"); // Teploty page has this chart
+      
+      if (isAdvanced) {
+          initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
+      } else if (isStats) {
+          initStatsData(loc.lat, loc.lon, loc.name);
+      } else if (isHistory) {
+          fetchHistoricalData(loc.lat, loc.lon, loc.name);
+      } else {
+          // Index page
+          fetchWeather(loc.lat, loc.lon, `Počasí ${loc.name}`);
+      }
+  }
 
   /**
    * Uloží vybranou lokaci do localStorage
    * @param {string} key - Klíč lokace (plzen, krimice, cheznovice)
    */
   function saveLocation(key) {
-    if (savedLocations[key]) {
-      localStorage.setItem("weatherLocation", key);
-    }
+    localStorage.setItem("weatherLocation", key);
   }
 
   /**
@@ -80,7 +213,14 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   function loadStoredLocation() {
     const saved = localStorage.getItem("weatherLocation");
-    return savedLocations[saved] ? saved : "plzen";
+    // Validate if saved key exists in base or custom
+    if (baseLocations[saved]) return saved;
+    if (saved && saved.startsWith("custom-")) {
+        const index = parseInt(saved.split("-")[1]);
+        const customs = getCustomLocations();
+        if (customs[index]) return saved;
+    }
+    return "plzen";
   }
 
   // WMO Weather Codes mapping to Bootstrap Icons and Czech descriptions
@@ -526,101 +666,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (btnPlzen) {
-    btnPlzen.addEventListener("click", () => {
-      saveLocation("plzen");
-      updateActiveButton(btnPlzen);
-      fetchWeather(49.7475, 13.3776, "Počasí v Plzni");
-    });
-  }
+  // Render buttons initially
+  renderLocationButtons();
 
-  if (btnKrimice) {
-    btnKrimice.addEventListener("click", () => {
-      saveLocation("krimice");
-      updateActiveButton(btnKrimice);
-      fetchWeather(49.758, 13.317, "Počasí Křimice");
-    });
-  }
-
-  if (btnCheznovice) {
-    btnCheznovice.addEventListener("click", () => {
-      saveLocation("cheznovice");
-      updateActiveButton(btnCheznovice);
-      fetchWeather(49.7789, 13.7854, "Počasí v Cheznovicích");
-    });
-  }
-
-  if (btnPlzenHist) {
-    btnPlzenHist.addEventListener("click", () => {
-      saveLocation("plzen");
-      updateActiveButtonHist(btnPlzenHist);
-      fetchHistoricalData(49.7475, 13.3776, "Plzeň");
-    });
-  }
-  
-  if (btnKrimiceHist) {
-    btnKrimiceHist.addEventListener("click", () => {
-      saveLocation("krimice");
-      updateActiveButtonHist(btnKrimiceHist);
-      fetchHistoricalData(49.758, 13.317, "Křimice");
-    });
-  }
-  
-  if (btnCheznoviceHist) {
-    btnCheznoviceHist.addEventListener("click", () => {
-      saveLocation("cheznovice");
-      updateActiveButtonHist(btnCheznoviceHist);
-      fetchHistoricalData(49.7789, 13.7854, "Cheznovice");
-    });
-  }
-
-  if (btnPlzenAdv) {
-    btnPlzenAdv.addEventListener("click", () => {
-      saveLocation("plzen");
-      updateActiveButtonAdv(btnPlzenAdv);
-      initAdvancedWeatherData(49.7475, 13.3776, "Plzeň");
-    });
-  }
-  
-  if (btnKrimiceAdv) {
-    btnKrimiceAdv.addEventListener("click", () => {
-      saveLocation("krimice");
-      updateActiveButtonAdv(btnKrimiceAdv);
-      initAdvancedWeatherData(49.758, 13.317, "Křimice");
-    });
-  }
-  
-  if (btnCheznoviceAdv) {
-    btnCheznoviceAdv.addEventListener("click", () => {
-      saveLocation("cheznovice");
-      updateActiveButtonAdv(btnCheznoviceAdv);
-      initAdvancedWeatherData(49.7789, 13.7854, "Cheznovice");
-    });
-  }
-
-  if (btnPlzenStats) {
-    btnPlzenStats.addEventListener("click", () => {
-      saveLocation("plzen");
-      updateActiveButtonStats(btnPlzenStats);
-      initStatsData(49.7475, 13.3776, "Plzeň");
-    });
-  }
-  
-  if (btnKrimiceStats) {
-    btnKrimiceStats.addEventListener("click", () => {
-      saveLocation("krimice");
-      updateActiveButtonStats(btnKrimiceStats);
-      initStatsData(49.758, 13.317, "Křimice");
-    });
-  }
-  
-  if (btnCheznoviceStats) {
-    btnCheznoviceStats.addEventListener("click", () => {
-      saveLocation("cheznovice");
-      updateActiveButtonStats(btnCheznoviceStats);
-      initStatsData(49.7789, 13.7854, "Cheznovice");
-    });
-  }
+  // Remove old individual listeners - functionality is now centralized in renderLocationButtons
+  // The old code blocks for btnPlzen, btnKrimice... etc are removed.
 
   // Search logic for Index Page
   const searchInput = document.getElementById("search-input");
@@ -773,18 +823,25 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch((err) => console.error("Error fetching radar data:", err));
   }
 
+  let lastSearchedLocation = null;
+
   /**
    * Zpracuje vyhledávání místa a načte jeho počasí
    * @param {HTMLElement} inputElement - Input pole s názvem místa
-   * @param {boolean|string} isHistory - Zda se jedná o historickou stránku ('stats' nebo 'advanced' pro další stránky)
+   * @param {boolean|string} isHistory - Zda se jedná o historickou stránku
    */
   function handleSearch(inputElement, isHistory = false) {
     const query = inputElement ? inputElement.value.trim() : "";
     if (!query) return;
 
-    const suggestionsElement = isHistory
-      ? historySuggestionsList
-      : suggestionsList;
+    const suggestionsElement =
+      isHistory === "advanced"
+        ? advancedSuggestionsList
+        : isHistory === "stats"
+          ? statsSuggestionsList
+          : isHistory
+            ? historySuggestionsList
+            : suggestionsList;
 
     // Hide suggestions
     if (suggestionsElement) suggestionsElement.classList.add("d-none");
@@ -800,6 +857,10 @@ document.addEventListener("DOMContentLoaded", () => {
           const name = result.name;
           const lat = result.latitude;
           const lon = result.longitude;
+
+          // Store for "Add Location" feature
+          lastSearchedLocation = { name, lat, lon };
+          enableAddButton(isHistory);
 
           // Update input
           if (inputElement) inputElement.value = name;
@@ -1406,30 +1467,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /**
+   * Helper to get location object from key
+   */
+  function getLocationData(key) {
+      if (baseLocations[key]) return baseLocations[key];
+      if (key && key.startsWith("custom-")) {
+          const index = parseInt(key.split("-")[1]);
+          const customs = getCustomLocations();
+          return customs[index];
+      }
+      return baseLocations["plzen"]; // Fallback
+  }
+
   // Initial Fetch (Plzeň) - Only on main page if weather elements exist
   if (document.getElementById("weather-data")) {
     const saved = loadStoredLocation();
-    const loc = savedLocations[saved];
-    
-    // Set active button
-    if (saved === "plzen") updateActiveButton(btnPlzen);
-    if (saved === "krimice") updateActiveButton(btnKrimice);
-    if (saved === "cheznovice") updateActiveButton(btnCheznovice);
-    
-    fetchWeather(loc.lat, loc.lon, loc.title);
+    const loc = getLocationData(saved);
+    if (loc) {
+        fetchWeather(loc.lat, loc.lon, `Počasí ${loc.name}`);
+    }
   }
 
   // Initial Chart (Prague/Plzeň default) - Only on Teploty page
   if (document.getElementById("temperatureChart")) {
     const saved = loadStoredLocation();
-    const loc = savedLocations[saved];
-
-    // Set active button
-    if (saved === "plzen") updateActiveButtonHist(btnPlzenHist);
-    if (saved === "krimice") updateActiveButtonHist(btnKrimiceHist);
-    if (saved === "cheznovice") updateActiveButtonHist(btnCheznoviceHist);
-
-    fetchHistoricalData(loc.lat, loc.lon, loc.name);
+    const loc = getLocationData(saved);
+    if (loc) {
+        fetchHistoricalData(loc.lat, loc.lon, loc.name);
+    }
   }
 
   // ========== ADVANCED WEATHER DATA SECTION ==========
@@ -3038,6 +3104,10 @@ document.addEventListener("DOMContentLoaded", () => {
             item.addEventListener("click", () => {
               if (inputElement) inputElement.value = place.name;
               suggestionsElement.classList.add("d-none");
+              
+              // Store for "Add Location" feature
+              lastSearchedLocation = { name: place.name, lat: place.latitude, lon: place.longitude };
+              enableAddButton(isHistory);
 
               if (isHistory === "advanced") {
                 if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
@@ -3114,26 +3184,47 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial load for Advanced Data page
   if (document.getElementById("advanced-content")) {
     const saved = loadStoredLocation();
-    const loc = savedLocations[saved];
-
-    // Set active button
-    if (saved === "plzen") updateActiveButtonAdv(btnPlzenAdv);
-    if (saved === "krimice") updateActiveButtonAdv(btnKrimiceAdv);
-    if (saved === "cheznovice") updateActiveButtonAdv(btnCheznoviceAdv);
-
-    initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
+    const loc = getLocationData(saved);
+    if (loc) {
+        initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
+    }
   }
 
   // Initial load for Statistics page
   if (document.getElementById("stats-content")) {
     const saved = loadStoredLocation();
-    const loc = savedLocations[saved];
-
-    // Set active button
-    if (saved === "plzen") updateActiveButtonStats(btnPlzenStats);
-    if (saved === "krimice") updateActiveButtonStats(btnKrimiceStats);
-    if (saved === "cheznovice") updateActiveButtonStats(btnCheznoviceStats);
-
-    initStatsData(loc.lat, loc.lon, loc.name);
+    const loc = getLocationData(saved);
+    if (loc) {
+        initStatsData(loc.lat, loc.lon, loc.name);
+    }
   }
+  // Logic for "Add Location" Button
+  function enableAddButton(isHistory) {
+      let btnId;
+      if (isHistory === "advanced") btnId = "add-loc-advanced";
+      else if (isHistory === "stats") btnId = "add-loc-stats";
+      else if (isHistory === true) btnId = "add-loc-hist";
+      else btnId = "add-loc-main";
+      
+      const btn = document.getElementById(btnId);
+      if (btn) btn.disabled = false;
+  }
+  
+  function setupAddLocationButton(buttonId) {
+      const btn = document.getElementById(buttonId);
+      if (btn) {
+          btn.addEventListener("click", () => {
+              if (lastSearchedLocation) {
+                  addCustomLocation(lastSearchedLocation);
+                  btn.disabled = true; // Disable after adding
+              }
+          });
+      }
+  }
+  
+  // Setup all add buttons
+  setupAddLocationButton("add-loc-main");
+  setupAddLocationButton("add-loc-hist");
+  setupAddLocationButton("add-loc-stats");
+  setupAddLocationButton("add-loc-advanced");
 });
