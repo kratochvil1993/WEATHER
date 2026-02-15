@@ -21,6 +21,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnPlzen = document.getElementById("btn-plzen");
   const btnKrimice = document.getElementById("btn-krimice");
   const btnCheznovice = document.getElementById("btn-cheznovice");
+  
+  const btnPlzenHist = document.getElementById("btn-plzen-hist");
+  const btnKrimiceHist = document.getElementById("btn-krimice-hist");
+  const btnCheznoviceHist = document.getElementById("btn-cheznovice-hist");
+
+  const btnPlzenAdv = document.getElementById("btn-plzen-adv");
+  const btnKrimiceAdv = document.getElementById("btn-krimice-adv");
+  const btnCheznoviceAdv = document.getElementById("btn-cheznovice-adv");
+  
+  const btnPlzenStats = document.getElementById("btn-plzen-stats");
+  const btnKrimiceStats = document.getElementById("btn-krimice-stats");
+  const btnCheznoviceStats = document.getElementById("btn-cheznovice-stats");
 
   const sunriseElement = document.getElementById("sunrise");
   const sunsetElement = document.getElementById("sunset");
@@ -434,6 +446,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function updateActiveButtonHist(activeBtn) {
+    [btnPlzenHist, btnKrimiceHist, btnCheznoviceHist].forEach((btn) => {
+      if (btn) {
+        if (btn === activeBtn) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      }
+    });
+  }
+
+  function updateActiveButtonAdv(activeBtn) {
+    [btnPlzenAdv, btnKrimiceAdv, btnCheznoviceAdv].forEach((btn) => {
+      if (btn) {
+        if (btn === activeBtn) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      }
+    });
+  }
+
+  function updateActiveButtonStats(activeBtn) {
+    [btnPlzenStats, btnKrimiceStats, btnCheznoviceStats].forEach((btn) => {
+      if (btn) {
+        if (btn === activeBtn) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      }
+    });
+  }
+
   if (btnPlzen) {
     btnPlzen.addEventListener("click", () => {
       updateActiveButton(btnPlzen);
@@ -452,6 +500,69 @@ document.addEventListener("DOMContentLoaded", () => {
     btnCheznovice.addEventListener("click", () => {
       updateActiveButton(btnCheznovice);
       fetchWeather(49.7789, 13.7854, "Počasí v Cheznovicích");
+    });
+  }
+
+  if (btnPlzenHist) {
+    btnPlzenHist.addEventListener("click", () => {
+      updateActiveButtonHist(btnPlzenHist);
+      fetchHistoricalData(49.7475, 13.3776, "Plzeň");
+    });
+  }
+  
+  if (btnKrimiceHist) {
+    btnKrimiceHist.addEventListener("click", () => {
+      updateActiveButtonHist(btnKrimiceHist);
+      fetchHistoricalData(49.758, 13.317, "Křimice");
+    });
+  }
+  
+  if (btnCheznoviceHist) {
+    btnCheznoviceHist.addEventListener("click", () => {
+      updateActiveButtonHist(btnCheznoviceHist);
+      fetchHistoricalData(49.7789, 13.7854, "Cheznovice");
+    });
+  }
+
+  if (btnPlzenAdv) {
+    btnPlzenAdv.addEventListener("click", () => {
+      updateActiveButtonAdv(btnPlzenAdv);
+      initAdvancedWeatherData(49.7475, 13.3776, "Plzeň");
+    });
+  }
+  
+  if (btnKrimiceAdv) {
+    btnKrimiceAdv.addEventListener("click", () => {
+      updateActiveButtonAdv(btnKrimiceAdv);
+      initAdvancedWeatherData(49.758, 13.317, "Křimice");
+    });
+  }
+  
+  if (btnCheznoviceAdv) {
+    btnCheznoviceAdv.addEventListener("click", () => {
+      updateActiveButtonAdv(btnCheznoviceAdv);
+      initAdvancedWeatherData(49.7789, 13.7854, "Cheznovice");
+    });
+  }
+
+  if (btnPlzenStats) {
+    btnPlzenStats.addEventListener("click", () => {
+      updateActiveButtonStats(btnPlzenStats);
+      initStatsData(49.7475, 13.3776, "Plzeň");
+    });
+  }
+  
+  if (btnKrimiceStats) {
+    btnKrimiceStats.addEventListener("click", () => {
+      updateActiveButtonStats(btnKrimiceStats);
+      initStatsData(49.758, 13.317, "Křimice");
+    });
+  }
+  
+  if (btnCheznoviceStats) {
+    btnCheznoviceStats.addEventListener("click", () => {
+      updateActiveButtonStats(btnCheznoviceStats);
+      initStatsData(49.7789, 13.7854, "Cheznovice");
     });
   }
 
@@ -2761,10 +2872,25 @@ document.addEventListener("DOMContentLoaded", () => {
           if (inputElement) inputElement.value = name;
 
           if (isHistory === "advanced") {
+            if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
+              [btnPlzenAdv, btnKrimiceAdv, btnCheznoviceAdv].forEach((btn) =>
+                btn.classList.remove("active"),
+              );
+            }
             initAdvancedWeatherData(lat, lon, name);
           } else if (isHistory === "stats") {
+            if (btnPlzenStats && btnKrimiceStats && btnCheznoviceStats) {
+              [btnPlzenStats, btnKrimiceStats, btnCheznoviceStats].forEach((btn) =>
+                btn.classList.remove("active"),
+              );
+            }
             initStatsData(lat, lon, name);
           } else if (isHistory) {
+            if (btnPlzenHist && btnKrimiceHist && btnCheznoviceHist) {
+              [btnPlzenHist, btnKrimiceHist, btnCheznoviceHist].forEach((btn) =>
+                btn.classList.remove("active"),
+              );
+            }
             fetchHistoricalData(lat, lon, name);
           } else {
             // Reset buttons on main page if needed
@@ -2843,14 +2969,35 @@ document.addEventListener("DOMContentLoaded", () => {
               suggestionsElement.classList.add("d-none");
 
               if (isHistory === "advanced") {
+                if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
+                  [
+                    btnPlzenAdv,
+                    btnKrimiceAdv,
+                    btnCheznoviceAdv,
+                  ].forEach((btn) => btn.classList.remove("active"));
+                }
                 initAdvancedWeatherData(
                   place.latitude,
                   place.longitude,
                   place.name,
                 );
               } else if (isHistory === "stats") {
+                if (btnPlzenStats && btnKrimiceStats && btnCheznoviceStats) {
+                  [
+                    btnPlzenStats,
+                    btnKrimiceStats,
+                    btnCheznoviceStats,
+                  ].forEach((btn) => btn.classList.remove("active"));
+                }
                 initStatsData(place.latitude, place.longitude, place.name);
               } else if (isHistory) {
+                if (btnPlzenHist && btnKrimiceHist && btnCheznoviceHist) {
+                  [
+                    btnPlzenHist,
+                    btnKrimiceHist,
+                    btnCheznoviceHist,
+                  ].forEach((btn) => btn.classList.remove("active"));
+                }
                 fetchHistoricalData(
                   place.latitude,
                   place.longitude,
