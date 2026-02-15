@@ -39,6 +39,50 @@ document.addEventListener("DOMContentLoaded", () => {
   const moonPhaseElement = document.getElementById("moon-phase");
   const moonIconElement = document.getElementById("moon-icon");
 
+  // Location Data Configuration
+  const savedLocations = {
+    plzen: {
+      lat: 49.7475,
+      lon: 13.3776,
+      name: "Plzeň",
+      title: "Počasí v Plzni",
+      buttons: ["btn-plzen", "btn-plzen-hist", "btn-plzen-adv", "btn-plzen-stats"]
+    },
+    krimice: {
+      lat: 49.758,
+      lon: 13.317,
+      name: "Křimice",
+      title: "Počasí Křimice",
+      buttons: ["btn-krimice", "btn-krimice-hist", "btn-krimice-adv", "btn-krimice-stats"]
+    },
+    cheznovice: {
+      lat: 49.7789,
+      lon: 13.7854,
+      name: "Cheznovice",
+      title: "Počasí v Cheznovicích",
+      buttons: ["btn-cheznovice", "btn-cheznovice-hist", "btn-cheznovice-adv", "btn-cheznovice-stats"]
+    }
+  };
+
+  /**
+   * Uloží vybranou lokaci do localStorage
+   * @param {string} key - Klíč lokace (plzen, krimice, cheznovice)
+   */
+  function saveLocation(key) {
+    if (savedLocations[key]) {
+      localStorage.setItem("weatherLocation", key);
+    }
+  }
+
+  /**
+   * Načte uloženou lokaci z localStorage
+   * @returns {string} Klíč uložené lokace nebo 'plzen'
+   */
+  function loadStoredLocation() {
+    const saved = localStorage.getItem("weatherLocation");
+    return savedLocations[saved] ? saved : "plzen";
+  }
+
   // WMO Weather Codes mapping to Bootstrap Icons and Czech descriptions
   const weatherCodes = {
     0: { icon: "bi-sun", desc: "Jasno" },
@@ -484,6 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnPlzen) {
     btnPlzen.addEventListener("click", () => {
+      saveLocation("plzen");
       updateActiveButton(btnPlzen);
       fetchWeather(49.7475, 13.3776, "Počasí v Plzni");
     });
@@ -491,6 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnKrimice) {
     btnKrimice.addEventListener("click", () => {
+      saveLocation("krimice");
       updateActiveButton(btnKrimice);
       fetchWeather(49.758, 13.317, "Počasí Křimice");
     });
@@ -498,6 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnCheznovice) {
     btnCheznovice.addEventListener("click", () => {
+      saveLocation("cheznovice");
       updateActiveButton(btnCheznovice);
       fetchWeather(49.7789, 13.7854, "Počasí v Cheznovicích");
     });
@@ -505,6 +552,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnPlzenHist) {
     btnPlzenHist.addEventListener("click", () => {
+      saveLocation("plzen");
       updateActiveButtonHist(btnPlzenHist);
       fetchHistoricalData(49.7475, 13.3776, "Plzeň");
     });
@@ -512,6 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnKrimiceHist) {
     btnKrimiceHist.addEventListener("click", () => {
+      saveLocation("krimice");
       updateActiveButtonHist(btnKrimiceHist);
       fetchHistoricalData(49.758, 13.317, "Křimice");
     });
@@ -519,6 +568,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnCheznoviceHist) {
     btnCheznoviceHist.addEventListener("click", () => {
+      saveLocation("cheznovice");
       updateActiveButtonHist(btnCheznoviceHist);
       fetchHistoricalData(49.7789, 13.7854, "Cheznovice");
     });
@@ -526,6 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnPlzenAdv) {
     btnPlzenAdv.addEventListener("click", () => {
+      saveLocation("plzen");
       updateActiveButtonAdv(btnPlzenAdv);
       initAdvancedWeatherData(49.7475, 13.3776, "Plzeň");
     });
@@ -533,6 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnKrimiceAdv) {
     btnKrimiceAdv.addEventListener("click", () => {
+      saveLocation("krimice");
       updateActiveButtonAdv(btnKrimiceAdv);
       initAdvancedWeatherData(49.758, 13.317, "Křimice");
     });
@@ -540,6 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnCheznoviceAdv) {
     btnCheznoviceAdv.addEventListener("click", () => {
+      saveLocation("cheznovice");
       updateActiveButtonAdv(btnCheznoviceAdv);
       initAdvancedWeatherData(49.7789, 13.7854, "Cheznovice");
     });
@@ -547,6 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnPlzenStats) {
     btnPlzenStats.addEventListener("click", () => {
+      saveLocation("plzen");
       updateActiveButtonStats(btnPlzenStats);
       initStatsData(49.7475, 13.3776, "Plzeň");
     });
@@ -554,6 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnKrimiceStats) {
     btnKrimiceStats.addEventListener("click", () => {
+      saveLocation("krimice");
       updateActiveButtonStats(btnKrimiceStats);
       initStatsData(49.758, 13.317, "Křimice");
     });
@@ -561,6 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   if (btnCheznoviceStats) {
     btnCheznoviceStats.addEventListener("click", () => {
+      saveLocation("cheznovice");
       updateActiveButtonStats(btnCheznoviceStats);
       initStatsData(49.7789, 13.7854, "Cheznovice");
     });
@@ -1352,13 +1408,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial Fetch (Plzeň) - Only on main page if weather elements exist
   if (document.getElementById("weather-data")) {
-    fetchWeather(49.7475, 13.3776, "Počasí v Plzni");
+    const saved = loadStoredLocation();
+    const loc = savedLocations[saved];
+    
+    // Set active button
+    if (saved === "plzen") updateActiveButton(btnPlzen);
+    if (saved === "krimice") updateActiveButton(btnKrimice);
+    if (saved === "cheznovice") updateActiveButton(btnCheznovice);
+    
+    fetchWeather(loc.lat, loc.lon, loc.title);
   }
 
   // Initial Chart (Prague/Plzeň default) - Only on Teploty page
   if (document.getElementById("temperatureChart")) {
-    // Default to Plzeň for consistency
-    fetchHistoricalData(49.7475, 13.3776, "Plzeň");
+    const saved = loadStoredLocation();
+    const loc = savedLocations[saved];
+
+    // Set active button
+    if (saved === "plzen") updateActiveButtonHist(btnPlzenHist);
+    if (saved === "krimice") updateActiveButtonHist(btnKrimiceHist);
+    if (saved === "cheznovice") updateActiveButtonHist(btnCheznoviceHist);
+
+    fetchHistoricalData(loc.lat, loc.lon, loc.name);
   }
 
   // ========== ADVANCED WEATHER DATA SECTION ==========
@@ -3042,11 +3113,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial load for Advanced Data page
   if (document.getElementById("advanced-content")) {
-    initAdvancedWeatherData(49.7475, 13.3776, "Plzeň");
+    const saved = loadStoredLocation();
+    const loc = savedLocations[saved];
+
+    // Set active button
+    if (saved === "plzen") updateActiveButtonAdv(btnPlzenAdv);
+    if (saved === "krimice") updateActiveButtonAdv(btnKrimiceAdv);
+    if (saved === "cheznovice") updateActiveButtonAdv(btnCheznoviceAdv);
+
+    initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
   }
 
   // Initial load for Statistics page
   if (document.getElementById("stats-content")) {
-    initStatsData(49.7475, 13.3776, "Plzeň");
+    const saved = loadStoredLocation();
+    const loc = savedLocations[saved];
+
+    // Set active button
+    if (saved === "plzen") updateActiveButtonStats(btnPlzenStats);
+    if (saved === "krimice") updateActiveButtonStats(btnKrimiceStats);
+    if (saved === "cheznovice") updateActiveButtonStats(btnCheznoviceStats);
+
+    initStatsData(loc.lat, loc.lon, loc.name);
   }
 });
