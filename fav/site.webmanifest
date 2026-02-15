@@ -1,6 +1,6 @@
 {
   "name": "Weather",
-  "short_name": "WJKEU",
+  "short_name": "Weather",
   "icons": [
     {
       "src": "/fav/web-app-manifest-192x192.png",
