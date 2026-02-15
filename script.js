@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const hourlyContent = document.getElementById("hourly-content");
 
   const btnPlzen = document.getElementById("btn-plzen");
-  const btnZelRuda = document.getElementById("btn-zel-ruda");
+  const btnKrimice = document.getElementById("btn-krimice");
   const btnCheznovice = document.getElementById("btn-cheznovice");
 
   const sunriseElement = document.getElementById("sunrise");
@@ -423,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {HTMLElement} activeBtn - Tlačítko, které má být aktivní
    */
   function updateActiveButton(activeBtn) {
-    [btnPlzen, btnZelRuda, btnCheznovice].forEach((btn) => {
+    [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) => {
       if (btn) {
         if (btn === activeBtn) {
           btn.classList.add("active");
@@ -441,10 +441,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (btnZelRuda) {
-    btnZelRuda.addEventListener("click", () => {
-      updateActiveButton(btnZelRuda);
-      fetchWeather(49.1356, 13.2366, "Počasí Železná Ruda");
+  if (btnKrimice) {
+    btnKrimice.addEventListener("click", () => {
+      updateActiveButton(btnKrimice);
+      fetchWeather(49.758, 13.317, "Počasí Křimice");
     });
   }
 
@@ -641,8 +641,8 @@ document.addEventListener("DOMContentLoaded", () => {
             fetchHistoricalData(lat, lon, name);
           } else {
             // Reset buttons on main page if needed
-            if (btnPlzen && btnZelRuda && btnCheznovice) {
-              [btnPlzen, btnZelRuda, btnCheznovice].forEach((btn) =>
+            if (btnPlzen && btnKrimice && btnCheznovice) {
+              [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
                 btn.classList.remove("active"),
               );
             }
@@ -1097,8 +1097,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   place.longitude,
                   `Počasí ${place.name}`,
                 );
-                if (btnPlzen && btnZelRuda && btnCheznovice) {
-                  [btnPlzen, btnZelRuda, btnCheznovice].forEach((btn) =>
+                if (btnPlzen && btnKrimice && btnCheznovice) {
+                  [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
                     btn.classList.remove("active"),
                   );
                 }
@@ -2768,8 +2768,8 @@ document.addEventListener("DOMContentLoaded", () => {
             fetchHistoricalData(lat, lon, name);
           } else {
             // Reset buttons on main page if needed
-            if (btnPlzen && btnZelRuda && btnCheznovice) {
-              [btnPlzen, btnZelRuda, btnCheznovice].forEach((btn) =>
+            if (btnPlzen && btnKrimice && btnCheznovice) {
+              [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
                 btn.classList.remove("active"),
               );
             }
@@ -2862,8 +2862,8 @@ document.addEventListener("DOMContentLoaded", () => {
                   place.longitude,
                   `Počasí ${place.name}`,
                 );
-                if (btnPlzen && btnZelRuda && btnCheznovice) {
-                  [btnPlzen, btnZelRuda, btnCheznovice].forEach((btn) =>
+                if (btnPlzen && btnKrimice && btnCheznovice) {
+                  [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
                     btn.classList.remove("active"),
                   );
                 }
