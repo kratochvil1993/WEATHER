@@ -150,8 +150,8 @@ h1 {
 /* Hourly Forecast Scroll */
 .hourly-scroll {
   display: flex;
-  /* overflow-x: auto; */
-  overflow-x: hidden;
+  overflow-x: auto;
+  /* overflow-x: hidden; */
   gap: 1.5rem;
   padding-bottom: 1rem;
   scrollbar-width: thin;
@@ -404,4 +404,19 @@ h1 {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* Responsive Location Buttons */
+@media (max-width: 768px) {
+  .btn-group[aria-label="Location Selection"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .btn-group[aria-label="Location Selection"] .btn {
+    border-radius: 30px !important; /* Obnoví kulaté rohy */
+    flex: 1 1 auto; /* Tlačítka se roztáhnou */
+    margin-bottom: 0;
+  }
 }
