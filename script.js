@@ -392,6 +392,83 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Update Background
     updateBackground(current.weather_code);
+    
+    // Update Theme based on temperature
+    updateTheme(current.temperature_2m);
+  }
+
+  /**
+   * Dynamicky mění barevné téma aplikace podle teploty
+   * @param {number} temperature - Teplota v °C
+   */
+  function updateTheme(temperature) {
+    let theme = {};
+
+    if (temperature < 0) {
+      // Mráz: Ledově modrá
+      theme = {
+        start: "#2c3e50",
+        end: "#4ca1af",
+        shadow: "rgba(76, 161, 175, 0.4)",
+        hover: "rgba(76, 161, 175, 0.2)",
+        active: "rgba(76, 161, 175, 0.3)",
+        accent: "#a8e6cf", // Ice Mint
+        glow: "rgba(168, 230, 207, 0.6)"
+      };
+    } else if (temperature < 10) {
+      // Chladno: Standardní modrá (Default)
+      theme = {
+        start: "#1e3c72",
+        end: "#2a5298",
+        shadow: "rgba(31, 38, 135, 0.37)",
+        hover: "rgba(255, 255, 255, 0.2)",
+        active: "rgba(255, 255, 255, 0.3)",
+        accent: "#ffffff",
+        glow: "rgba(255, 255, 255, 0.2)"
+      };
+    } else if (temperature < 20) {
+        // Jaro: Svěží zelená
+        theme = {
+          start: "#134E5E",
+          end: "#71B280",
+          shadow: "rgba(19, 78, 94, 0.4)",
+          hover: "rgba(113, 178, 128, 0.2)",
+          active: "rgba(113, 178, 128, 0.3)",
+          accent: "#d4fc79", // Light Lime
+          glow: "rgba(212, 252, 121, 0.5)"
+        };
+    } else if (temperature < 30) {
+      // Teplo: Slunečná oranžová
+      theme = {
+        start: "#F2994A",
+        end: "#F2C94C",
+        shadow: "rgba(242, 153, 74, 0.4)",
+        hover: "rgba(242, 201, 76, 0.2)",
+        active: "rgba(242, 201, 76, 0.3)",
+        accent: "#ffe259", // Sun Yellow
+        glow: "rgba(255, 226, 89, 0.6)"
+      };
+    } else {
+      // Horko: Sytá červená
+      theme = {
+        start: "#FF416C",
+        end: "#FF4B2B",
+        shadow: "rgba(255, 65, 108, 0.4)",
+        hover: "rgba(255, 75, 43, 0.2)",
+        active: "rgba(255, 75, 43, 0.3)",
+        accent: "#ff9966", // Hot Orange
+        glow: "rgba(255, 153, 102, 0.7)"
+      };
+    }
+
+    const root = document.documentElement;
+    root.style.setProperty('--bg-gradient-start', theme.start);
+    root.style.setProperty('--bg-gradient-end', theme.end);
+    root.style.setProperty('--glass-shadow', theme.shadow);
+    root.style.setProperty('--glass-hover-bg', theme.hover);
+    root.style.setProperty('--active-bg', theme.active);
+    root.style.setProperty('--glass-accent', theme.accent);
+    root.style.setProperty('--glow-color', theme.glow);
   }
 
   /**
@@ -1082,6 +1159,14 @@ document.addEventListener("DOMContentLoaded", () => {
     errorChart.classList.add("d-none");
     chartCanvasMean.classList.add("d-none");
     chartCanvasMax.classList.add("d-none");
+
+    // Update Theme based on current temperature
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.current) updateTheme(data.current.temperature_2m);
+        })
+        .catch(console.error);
 
     // Fetch Data for 1993, 2000, 2023, 2024 and 2025
     // Using archive-api.open-meteo.com
@@ -2384,6 +2469,9 @@ document.addEventListener("DOMContentLoaded", () => {
             (diff >= 0 ? "+" : "") + diff.toFixed(1);
 
           renderApparentTempChart(data.hourly);
+          
+          // Update Theme based on real temperature (propagating theme to Advanced Data page)
+          updateTheme(realTemp);
         }
       })
       .catch((err) =>
@@ -3072,7 +3160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loadingEl) loadingEl.classList.remove("d-none");
     if (errorEl) errorEl.classList.add("d-none");
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max&timezone=auto&past_days=30&forecast_days=7`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max&timezone=auto&past_days=30&forecast_days=7`;
 
     fetch(url)
       .then((res) => {
@@ -3082,6 +3170,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         const daily = data.daily;
         if (!daily) throw new Error("Missing daily data");
+
+        if (data.current) {
+             updateTheme(data.current.temperature_2m);
+        }
 
         updateStatsDailySummary(daily);
         renderStatsWeeklyChart(daily);

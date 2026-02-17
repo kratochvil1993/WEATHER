@@ -1,3 +1,21 @@
+:root {
+  /* Default Theme (Cold/Neutral Blue) */
+  --bg-gradient-start: #1e3c72;
+  --bg-gradient-end: #2a5298;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: rgba(31, 38, 135, 0.37);
+  --glass-hover-bg: rgba(255, 255, 255, 0.2);
+  --active-bg: rgba(255, 255, 255, 0.3);
+  --active-shadow: rgba(0, 0, 0, 0.1);
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  
+  /* New Dynamic Accents */
+  --glass-accent: rgba(255, 255, 255, 0.9); /* Bright accent color for icons/text */
+  --glow-color: rgba(255, 255, 255, 0.0); /* Subtle glow for main card */
+}
+
 /* Global Styles */
 body {
   font-family: "Inter", sans-serif;
@@ -6,10 +24,18 @@ body {
   overflow-x: hidden;
   background: linear-gradient(
     135deg,
-    #1e3c72 0%,
-    #2a5298 100%
-  ); /* Fallback gradient */
+    var(--bg-gradient-start) 0%,
+    var(--bg-gradient-end) 100%
+  );
   min-height: 100vh;
+  color: var(--text-main);
+  transition: background 1s ease, color 0.5s ease;
+}
+
+/* Dynamic Selection Color */
+::selection {
+  background: var(--glass-accent);
+  color: #1e3c72; /* Dark text for contrast */
 }
 
 /* Background Container */
@@ -38,16 +64,16 @@ body {
 
 /* Glassmorphism Card */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
   width: 100%;
-  width: 100%;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
+
 
 .glass:hover {
   transform: translateY(-5px);
@@ -56,17 +82,33 @@ body {
 /* Inner Glass Elements */
 .glass-light {
   background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   transition: background 0.3s ease;
 }
 
 .glass-light:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--glass-hover-bg);
 }
 
-/* Typography & Icons */
+/* Typography & Icons with Accents */
 h1 {
   letter-spacing: 1px;
+}
+
+i.bi {
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+
+/* Main Weather Icon Accent */
+#weather-icon {
+    color: var(--glass-accent);
+    filter: drop-shadow(0 0 10px var(--glow-color));
+}
+
+/* Temperature Accent */
+#temperature {
+    color: var(--glass-accent);
+    text-shadow: 0 0 20px var(--glow-color);
 }
 
 .section-title {
@@ -109,6 +151,17 @@ h1 {
   }
 }
 
+/* Pulse Animation for extreme weather */
+@keyframes pulse-glow {
+    0% { filter: drop-shadow(0 0 5px var(--glow-color)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 20px var(--glow-color)); transform: scale(1.05); }
+    100% { filter: drop-shadow(0 0 5px var(--glow-color)); transform: scale(1); }
+}
+
+.pulse-icon {
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
 /* Loader */
 .spinner-border {
   width: 3rem;
@@ -117,9 +170,9 @@ h1 {
 
 /* Custom Nav Pills */
 .nav-pills .nav-link {
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-bg);
   border-radius: 10px;
   padding: 10px 15px;
   transition: all 0.3s ease;
@@ -131,11 +184,11 @@ h1 {
 }
 
 .nav-pills .nav-link.active {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--active-bg);
+  border-color: var(--glass-border);
   color: #fff;
   backdrop-filter: blur(5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px var(--active-shadow);
 }
 
 .forecast-icon {
@@ -155,7 +208,7 @@ h1 {
   gap: 1.5rem;
   padding-bottom: 1rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: var(--glass-accent) transparent;
   cursor: grab;
   user-select: none;
 }
@@ -174,7 +227,7 @@ h1 {
 }
 
 .hourly-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--glass-accent);
   border-radius: 4px;
 }
 
@@ -192,9 +245,9 @@ h1 {
 
 /* Glass Buttons */
 .btn-glass {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
   backdrop-filter: blur(5px);
   transition: all 0.3s ease;
   padding: 10px 25px;
@@ -216,22 +269,23 @@ h1 {
 }
 
 .btn-glass:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--glass-hover-bg);
   color: #fff;
   transform: translateY(-2px);
 }
 
 .btn-glass.active {
-  background: rgba(255, 255, 255, 0.3);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: var(--active-bg);
+  color: var(--glass-accent);
+  border-color: var(--glass-accent);
+  box-shadow: 0 0 15px var(--glow-color);
+  font-weight: 600;
 }
 
 /* Search Input Styles */
 .glass-input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   color: #fff !important; /* Force white text */
   backdrop-filter: blur(5px);
   border-right: none; /* Merge with button */
@@ -319,7 +373,12 @@ h1 {
   transition: transform 0.3s ease-in-out;
   border-radius: 0 20px 20px 0;
   backdrop-filter: blur(20px);
-  background: rgba(30, 60, 114, 0.95);
+  background: linear-gradient(
+    180deg,
+    var(--bg-gradient-start) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  box-shadow: 5px 0 15px var(--glass-shadow);
 }
 
 .side-panel.open {
@@ -332,13 +391,18 @@ h1 {
 }
 
 .side-panel .nav-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-hover-bg);
+  color: var(--glass-accent);
   transform: translateX(5px);
+  text-shadow: 0 0 10px var(--glow-color);
 }
 
 .side-panel .active-link {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--active-bg);
+  color: var(--glass-accent) !important;
   font-weight: bold;
+  border-left: 4px solid var(--glass-accent);
+  box-shadow: 0 4px 15px var(--active-shadow);
 }
 
 /* Icon only button adjustments */
@@ -353,12 +417,17 @@ h1 {
 }
 
 #menu-toggle {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
   z-index: 2000 !important;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
 }
 
 #menu-toggle:hover {
   transform: rotate(90deg);
+  background: var(--active-bg);
+  color: var(--glass-accent);
+  box-shadow: 0 0 15px var(--glow-color);
 }
 
 /* Weather Map Styles */
