@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
+  // --- DOM Elements ---
   // DOM Elements
   const tempElement = document.getElementById("temperature");
   const conditionElement = document.getElementById("condition");
@@ -214,11 +216,14 @@ document.addEventListener("DOMContentLoaded", () => {
           // Index page
           fetchWeather(loc.lat, loc.lon, `Počasí ${loc.name}`);
       }
+      
+      // Update UI for My Location button (deactivate it if we clicked something else)
+      updateMyLocationButtonState(key === 'geolocation');
   }
 
   /**
    * Uloží vybranou lokaci do localStorage
-   * @param {string} key - Klíč lokace (plzen, krimice, cheznovice)
+   * @param {string} key - Klíč lokace (plzen, krimice, cheznovice, geolocation)
    */
   function saveLocation(key) {
     localStorage.setItem("weatherLocation", key);
@@ -230,6 +235,10 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   function loadStoredLocation() {
     const saved = localStorage.getItem("weatherLocation");
+    
+    // Check specific keys first
+    if (saved === 'geolocation') return 'geolocation';
+    
     // Validate if saved key exists in base or custom
     if (baseLocations[saved]) return saved;
     if (saved && saved.startsWith("custom-")) {
@@ -238,6 +247,22 @@ document.addEventListener("DOMContentLoaded", () => {
         if (customs[index]) return saved;
     }
     return "plzen";
+  }
+
+  /**
+   * Helper to update My Location button visual state
+   */
+  function updateMyLocationButtonState(isActive) {
+      const btn = document.getElementById("current-location-btn");
+      if (btn) {
+          if (isActive) {
+              btn.classList.add("active");
+              btn.classList.remove("text-white"); // Remove utility class that might conflict with active style
+          } else {
+              btn.classList.remove("active");
+              btn.classList.add("text-white");
+          }
+      }
   }
 
   // WMO Weather Codes mapping to Bootstrap Icons and Czech descriptions
@@ -693,6 +718,97 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("search-input");
   const searchButton = document.getElementById("search-button");
   const suggestionsList = document.getElementById("suggestions-list");
+  const currentLocationBtn = document.getElementById("current-location-btn");
+
+  if (currentLocationBtn) {
+    currentLocationBtn.addEventListener("click", () => {
+      console.log("GPS Button clicked");
+      if (navigator.geolocation) {
+        // Show loading state on button
+        const originalText = currentLocationBtn.innerHTML;
+        console.log("Original text captured:", originalText);
+        
+        currentLocationBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Zjišťuji...';
+        currentLocationBtn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log("GPS Success");
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Restore button state IMMEDIATELY (UX optimization)
+            // Use hardcoded content to avoid restoring a potential spinner if state was corrupted
+            const defaultContent = '<i class="bi bi-geo-alt-fill me-1"></i> Moje poloha';
+            currentLocationBtn.innerHTML = defaultContent;
+            currentLocationBtn.disabled = false;
+            updateMyLocationButtonState(true);
+            console.log("Button reset command executed");
+            
+            // 1. Immediately fetch data with generic name for speed
+            // Save temporary state
+            const geoData = { lat: lat, lon: lon, name: "Vaše poloha" };
+            localStorage.setItem("geoData", JSON.stringify(geoData));
+            
+            // Trigger update immediately
+            console.log("Calling handleLocationClick");
+            handleLocationClick('geolocation', geoData);
+
+            // 2. Perform Reverse Geocoding in background
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1&accept-language=cs`)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.address;
+                    const locationName = address.city || address.town || address.village || address.suburb || address.municipality || "Vaše poloha";
+                    
+                    // Update stored data with real name
+                    geoData.name = locationName;
+                    localStorage.setItem("geoData", JSON.stringify(geoData));
+                    
+                    // Refresh view with new name if we are still on geolocation
+                    if (loadStoredLocation() === 'geolocation') {
+                         handleLocationClick('geolocation', geoData);
+                    }
+                })
+                .catch(err => {
+                    console.error("Reverse geocoding failed:", err);
+                });
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            
+            // Restore button state IMMEDIATELY
+            const defaultContent = '<i class="bi bi-geo-alt-fill me-1"></i> Moje poloha';
+            currentLocationBtn.innerHTML = defaultContent;
+            currentLocationBtn.disabled = false;
+            
+            // Ensure main loader is hidden if it was shown
+            const loadingSpinner = document.getElementById("loading");
+            if (loadingSpinner) loadingSpinner.classList.add("d-none");
+
+            let msg = "Nepodařilo se zjistit polohu.";
+            if (error.code === error.PERMISSION_DENIED) {
+                msg = "Povolte prosím přístup k poloze v prohlížeči.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                msg = "Poloha není dostupná. Zkontrolujte GPS/síť.";
+            } else if (error.code === error.TIMEOUT) {
+                msg = "Vypršel časový limit pro zjištění polohy.";
+            }
+            
+            // Use setTimeout to allow UI to repaint before alert blocks
+            setTimeout(() => alert(msg), 50);
+          },
+          {
+            timeout: 10000,
+            enableHighAccuracy: true,
+            maximumAge: 0
+          }
+        );
+      } else {
+        alert("Váš prohlížeč nepodporuje geolokaci.");
+      }
+    });
+  }
 
   // Search logic for History Page (Teploty)
   const historySearchInput = document.getElementById("history-search-input");
@@ -715,6 +831,49 @@ document.addEventListener("DOMContentLoaded", () => {
   let radarLayer = null;
 
   let mapInitialized = false;
+
+  // --- INITIALIZATION LOGIC ---
+  
+  // Check what location to load on startup
+  const savedKey = loadStoredLocation();
+  
+  // Wrap initialization in try-catch to ensure UI keeps working even if storage data is corrupted
+  try {
+      if (savedKey === 'geolocation') {
+          const geoDataString = localStorage.getItem("geoData");
+          if (geoDataString) {
+              try {
+                  const geoData = JSON.parse(geoDataString);
+                  handleLocationClick('geolocation', geoData);
+              } catch(e) {
+                  console.error("Error parsing geoData", e);
+                  handleLocationClick("plzen", baseLocations["plzen"]);
+              }
+          } else {
+             handleLocationClick("plzen", baseLocations["plzen"]); 
+          }
+      } else if (savedKey.startsWith("custom-")) {
+          const index = parseInt(savedKey.split("-")[1]);
+          const customs = getCustomLocations();
+          if (customs[index]) {
+               handleLocationClick(savedKey, customs[index]);
+          } else {
+               handleLocationClick("plzen", baseLocations["plzen"]);
+          }
+      } else {
+          // Base location
+          const loc = baseLocations[savedKey] || baseLocations["plzen"]; // Default fallback
+          handleLocationClick(savedKey, loc);
+      }
+  } catch (initError) {
+      console.error("Initialization error:", initError);
+      // Last resort fallback
+      try {
+          handleLocationClick("plzen", baseLocations["plzen"]);
+      } catch (e) { console.error("Critical fallback error", e); }
+  }
+  
+  // Note: Old individual render logic removed in favor of unified initialization above.
 
   /**
    * Inicializuje interaktivní mapu s radarovými daty počasí
@@ -1212,17 +1371,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderChart(canvasId, labels, datasets, type) {
     const ctx = document.getElementById(canvasId).getContext("2d");
 
-    // Destroy existing instance based on type
-    if (type === "mean") {
-      if (chartInstanceMean) chartInstanceMean.destroy();
-    } else if (type === "max") {
-      if (chartInstanceMax) chartInstanceMax.destroy();
-    }
+    // Destroy existing instance if any (search by canvas ID to be robust)
+    const existingChart = Chart.getChart(document.getElementById(canvasId));
+    if (existingChart) existingChart.destroy();
 
     // Note: Canvas gradients need the context, so they are best handled inside the dataset config or here if simple.
     // For complexity, we pass simple colors in dataset config above.
-    // If we strictly want the specific gradient from before, we'd need to recreate it here for each dataset opacity.
-    // Given the requirements, solid colors/simple rgba fills are cleaner for multi-line.
 
     const newChart = new Chart(ctx, {
       type: "line",
@@ -1264,9 +1418,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (type === "mean") {
-      chartInstanceMean = newChart;
-    } else {
-      chartInstanceMax = newChart;
+        chartInstanceMean = newChart;
+    } else if (type === "max") {
+        chartInstanceMax = newChart;
     }
   }
 
@@ -1452,37 +1606,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Side Menu Logic
-  const menuToggle = document.getElementById("menu-toggle");
-  const sidePanel = document.getElementById("side-panel");
-  const menuClose = document.getElementById("menu-close");
 
-  if (menuToggle && sidePanel && menuClose) {
-    function toggleMenu() {
-      sidePanel.classList.toggle("open");
-    }
-
-    menuToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleMenu();
-    });
-
-    menuClose.addEventListener("click", (e) => {
-      e.stopPropagation();
-      sidePanel.classList.remove("open");
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener("click", (e) => {
-      if (
-        sidePanel.classList.contains("open") &&
-        !sidePanel.contains(e.target) &&
-        e.target !== menuToggle
-      ) {
-        sidePanel.classList.remove("open");
-      }
-    });
-  }
 
   /**
    * Helper to get location object from key
@@ -2652,7 +2776,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStatsWeeklyChart(daily) {
     const ctx = document.getElementById("stats-weekly-chart");
     if (!ctx) return;
-    if (statsWeeklyChartInstance) statsWeeklyChartInstance.destroy();
+    
+    // Robust destroy: check if chart exists on canvas
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) existingChart.destroy();
 
     const daysCount = Math.min(7, daily.time.length);
     const labels = [];
@@ -2742,7 +2869,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStatsNormalChart(daily) {
     const ctx = document.getElementById("stats-normal-chart");
     if (!ctx) return;
-    if (statsNormalChartInstance) statsNormalChartInstance.destroy();
+    
+    // Robust destroy
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) existingChart.destroy();
 
     const len = daily.time.length;
     if (!len) return;
@@ -2812,7 +2942,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderStatsHistoryChart(daily) {
     const ctx = document.getElementById("stats-history-chart");
     if (!ctx) return;
-    if (statsHistoryChartInstance) statsHistoryChartInstance.destroy();
+    
+    // Robust destroy
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) existingChart.destroy();
 
     const len = daily.time.length;
     if (!len) return;

@@ -25,7 +25,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1">
+    <link rel="stylesheet" href="style.css?v=3">
+    <script src="script.js?v=3"></script>
 </head>
 
 <body>
@@ -67,6 +68,11 @@
         <!-- Search Section -->
         <div class="row w-100 justify-content-center mb-4">
             <div class="col-md-6 col-lg-4 position-relative">
+                <div class="d-flex justify-content-center mb-2">
+                    <button class="btn btn-sm btn-glass text-white" type="button" id="current-location-btn">
+                        <i class="bi bi-geo-alt-fill me-1"></i> Moje poloha
+                    </button>
+                </div>
                 <div class="input-group">
                     <input type="text" id="search-input" class="form-control glass-input text-white"
                         placeholder="Zadejte město nebo vesnici..." aria-label="Hledat město" autocomplete="off">
@@ -220,7 +226,38 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Custom JS -->
-    <script src="script.js?v=1"></script>
+    <!-- Inline Menu Script (Failsafe) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidePanel = document.getElementById('side-panel');
+            const menuClose = document.getElementById('menu-close');
+
+            if (menuToggle && sidePanel) {
+                menuToggle.onclick = function (e) {
+                    e.stopPropagation();
+                    sidePanel.classList.toggle('open');
+                };
+
+                if (menuClose) {
+                    menuClose.onclick = function (e) {
+                        e.stopPropagation();
+                        sidePanel.classList.remove('open');
+                    };
+                }
+
+                document.onclick = function (e) {
+                    if (sidePanel.classList.contains('open') &&
+                        !sidePanel.contains(e.target) &&
+                        e.target !== menuToggle) {
+                        sidePanel.classList.remove('open');
+                    }
+                };
+            }
+        });
+    </script>
+    <!-- Custom JS -->
+    <script src="script.js?v=3"></script>
 </body>
 
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "weather-app-v1";
+const CACHE_NAME = "weather-app-v3";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -29,6 +29,7 @@ const ASSETS_TO_CACHE = [
 
 // Install Service Worker
 self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Activate worker immediately
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("Opened cache");
@@ -48,20 +49,29 @@ self.addEventListener("activate", (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Take control of all clients immediately
   );
 });
 
-// Fetch Strategy: Cache First, then Network
+// Fetch Strategy: Network First for HTML, Cache First for assets
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).catch(() => {
-          // Optional: Return a custom offline page if network fails and resource is not cached
-      });
-    })
-  );
+  // Check if request is for an HTML page (navigation)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Cache First strategy for all other assets (images, css, js)
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+    );
+  }
 });

@@ -354,6 +354,7 @@ h1 {
 
 #menu-toggle {
   transition: transform 0.3s ease;
+  z-index: 2000 !important;
 }
 
 #menu-toggle:hover {
