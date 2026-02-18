@@ -16,7 +16,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Sticky Navigation Logic ---
+  // Base locations configuration
+  const baseLocations = {
+    plzen: {
+      lat: 49.7475,
+      lon: 13.3776,
+      name: "Plzeň",
+    },
+    krimice: {
+      lat: 49.758,
+      lon: 13.317,
+      name: "Křimice",
+    },
+    cheznovice: {
+      lat: 49.7789,
+      lon: 13.7854,
+      name: "Cheznovice",
+    },
+  };
+  renderLocationButtons(); // Initialize location buttons immediately
   const stickyNav = document.querySelector(".sticky-nav");
   if (stickyNav) {
       // Create sentinel element 1px above sticky nav
@@ -93,24 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const moonPhaseElement = document.getElementById("moon-phase");
   const moonIconElement = document.getElementById("moon-icon");
 
-  // Base locations configuration
-  const baseLocations = {
-    plzen: {
-      lat: 49.7475,
-      lon: 13.3776,
-      name: "Plzeň",
-    },
-    krimice: {
-      lat: 49.758,
-      lon: 13.317,
-      name: "Křimice",
-    },
-    cheznovice: {
-      lat: 49.7789,
-      lon: 13.7854,
-      name: "Cheznovice",
-    },
-  };
+
 
   /**
    * Načte vlastní uložené lokace z localStorage
@@ -1379,8 +1380,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
   }
 
-  // Initial load
-  refreshWeatherData();
+
 
   // Helper pro kontrolu stáří dat
   function checkAndRefreshIfNeeded() {
@@ -2288,6 +2288,15 @@ document.addEventListener("DOMContentLoaded", () => {
    * Helper to get location object from key
    */
   function getLocationData(key) {
+      if (key === "search-result") {
+          const stored = localStorage.getItem("lastSearchData");
+          try {
+              return stored ? JSON.parse(stored) : baseLocations["plzen"];
+          } catch (e) {
+              return baseLocations["plzen"];
+          }
+      }
+      
       if (baseLocations[key]) return baseLocations[key];
       if (key && key.startsWith("custom-")) {
           const index = parseInt(key.split("-")[1]);
@@ -4523,4 +4532,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupAddLocationButton("add-loc-astro");
 
+  // Initial load
+  refreshWeatherData();
 });
