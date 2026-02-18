@@ -238,10 +238,12 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Determine context and fetch data
       // Determine context and fetch data
+      // Determine context and fetch data
       const isAdvanced = document.getElementById("advanced-content");
       const isStats = document.getElementById("stats-content");
       const isHistory = document.getElementById("temperatureChart"); // Teploty page has this chart
       const isTimeMachine = document.getElementById("time-machine-content");
+      const isAstro = document.getElementById("astro-content");
 
       if (isAdvanced) {
           initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
@@ -249,6 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
           initStatsData(loc.lat, loc.lon, loc.name);
       } else if (isTimeMachine) {
           initTimeMachineData(loc.lat, loc.lon, loc.name);
+      } else if (isAstro) {
+          initAstroData(loc.lat, loc.lon, loc.name);
       } else if (isHistory) {
           fetchHistoricalData(loc.lat, loc.lon, loc.name);
       } else {
@@ -3857,6 +3861,8 @@ document.addEventListener("DOMContentLoaded", () => {
             initStatsData(lat, lon, name);
           } else if (isHistory === "time-machine") {
             initTimeMachineData(lat, lon, name);
+          } else if (isHistory === "astro") {
+            initAstroData(lat, lon, name);
           } else if (isHistory) {
             fetchHistoricalData(lat, lon, name);
           } else {
@@ -3882,9 +3888,11 @@ document.addEventListener("DOMContentLoaded", () => {
           ? statsSearchInput
           : isHistory === "time-machine"
             ? timeMachineSearchInput
-            : isHistory
-              ? historySearchInput
-              : searchInput;
+            : isHistory === "astro"
+              ? astroSearchInput
+              : isHistory
+                ? historySearchInput
+                : searchInput;
 
     const suggestionsElement =
       isHistory === "advanced"
@@ -3893,9 +3901,11 @@ document.addEventListener("DOMContentLoaded", () => {
           ? statsSuggestionsList
           : isHistory === "time-machine"
             ? timeMachineSuggestionsList
-            : isHistory
-              ? historySuggestionsList
-              : suggestionsList;
+            : isHistory === "astro"
+              ? astroSuggestionsList
+              : isHistory
+                ? historySuggestionsList
+                : suggestionsList;
 
     if (!suggestionsElement) return;
 
@@ -3955,6 +3965,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 initStatsData(place.latitude, place.longitude, place.name);
               } else if (isHistory === "time-machine") {
                 initTimeMachineData(place.latitude, place.longitude, place.name);
+              } else if (isHistory === "astro") {
+                initAstroData(place.latitude, place.longitude, place.name);
               } else if (isHistory) {
                 fetchHistoricalData(place.latitude, place.longitude, place.name);
               } else {
@@ -4008,6 +4020,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isHistory === "advanced") btnId = "add-loc-advanced";
       else if (isHistory === "stats") btnId = "add-loc-stats";
       else if (isHistory === "time-machine") btnId = "add-loc-time";
+      else if (isHistory === "astro") btnId = "add-loc-astro";
       else if (isHistory === true) btnId = "add-loc-hist";
       else btnId = "add-loc-main";
       
@@ -4279,5 +4292,235 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  setupAddLocationButton("add-loc-time");
+
+  // --- Astro & UFO Logic ---
+  const astroSearchInput = document.getElementById("astro-search-input");
+  const astroSearchButton = document.getElementById("astro-search-button");
+  const astroSuggestionsList = document.getElementById("astro-suggestions-list");
+
+  // Search Listeners
+  if (astroSearchButton) {
+    astroSearchButton.addEventListener("click", () =>
+      handleSearch(astroSearchInput, "astro"),
+    );
+  }
+
+  if (astroSearchInput) {
+    astroSearchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleSearch(astroSearchInput, "astro");
+    });
+
+    astroSearchInput.addEventListener(
+      "input",
+      debounce((e) => {
+        fetchSuggestions(e.target.value.trim(), "astro");
+      }, 300),
+    );
+  }
+
+  // Close suggestions on click outside
+  document.addEventListener("click", (e) => {
+    if (astroSearchInput && astroSuggestionsList) {
+      if (
+        !astroSearchInput.contains(e.target) &&
+        !astroSuggestionsList.contains(e.target)
+      ) {
+        astroSuggestionsList.classList.add("d-none");
+      }
+    }
+  });
+
+  /**
+   * Inicializuje Astro data
+   */
+  function initAstroData(lat, lon, name) {
+    const titleElement = document.querySelector("h1.display-5");
+    if (titleElement && titleElement.textContent.includes("Pozorování")) {
+      // Could update title if needed
+    }
+
+    // 1. Star Visibility (Cloud Cover + Moon)
+    fetchStarVisibility(lat, lon);
+
+    // 2. Aurora (KP Index)
+    fetchAuroraForecast(lat, lon);
+
+    // 3. ISS Tracker
+    initISSTracker(lat, lon);
+  }
+
+  function fetchStarVisibility(lat, lon) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=cloud_cover,visibility&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if(!data.hourly) return;
+            
+            // Get current hour index
+            const now = new Date();
+            const hourIndex = now.getHours(); // Simple approx
+            
+            const cloudCover = data.hourly.cloud_cover[hourIndex];
+            const visibility    = data.hourly.visibility[hourIndex] / 1000; // km
+            
+            // Moon Phase Calculation (re-use existing helper or approx)
+            const moonInfo = getMoonPhase(); 
+            // We need approximate illumination %
+            // New Moon = 0%, Full Moon = 100%
+            // getMoonPhase returns name/icon. Let's do a quick calc again or map names to %
+            let moonIllumination = 50; // default
+            if(moonInfo.name === "Nov") moonIllumination = 0;
+            if(moonInfo.name === "Úplněk") moonIllumination = 100;
+            if(moonInfo.name.includes("srpek")) moonIllumination = 25;
+            if(moonInfo.name.includes("čtvrť")) moonIllumination = 50;
+            if(moonInfo.name.includes("měsíc")) moonIllumination = 75;
+
+            // Algorithm for Star Visibility Score (0-100)
+            // 1. Cloud Cover is the biggest factor (invert: 0 clouds = 100 score)
+            // 2. Visibility: higher is better
+            // 3. Moon: New Moon is best (0%), Full moon washes out stars (100%)
+            
+            let score = 100 - cloudCover;
+            
+            // Penalize for moon light (only if few clouds)
+            if (score > 50) {
+                // If it's clear, moon matters. If cloudy, moon doesn't matter.
+                score -= (moonIllumination * 0.2); // Moon can take away up to 20%
+            }
+            
+            // Bonus for great visibility
+            if (visibility > 20) score += 5;
+            
+            // Clamp
+            score = Math.max(0, Math.min(100, Math.round(score)));
+            
+            // Start updating UI
+            document.getElementById("star-score").textContent = `${score}%`;
+            document.getElementById("astro-cloud").textContent = `${cloudCover}%`;
+            document.getElementById("astro-moon").textContent = `${moonIllumination}%`;
+            document.getElementById("astro-visibility").textContent = `${visibility.toFixed(1)} km`;
+            
+            const verdictEl = document.getElementById("star-verdict");
+            if(score > 80) {
+                verdictEl.textContent = "Fantastické podmínky! 🔭";
+                verdictEl.style.color = "#4caf50";
+            } else if (score > 60) {
+                verdictEl.textContent = "Dobré podmínky. ✨";
+                verdictEl.style.color = "#8bc34a";
+            } else if (score > 40) {
+                verdictEl.textContent = "Ušlo by to. ☁️";
+                verdictEl.style.color = "#ffc107";
+            } else {
+                verdictEl.textContent = "Zůstaň doma, není vidět nic. 🚫";
+                verdictEl.style.color = "#f44336";
+            }
+
+        })
+        .catch(err => console.error("Star Viz Error", err));
+  }
+
+  function fetchAuroraForecast(lat, lon) {
+      // Using NOAA SWPC estimated KP or similar public JSON
+      // This URL often works for current observations
+      const url = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json";
+      
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            // Data is array of objects { time_tag, kp_index, ... }
+            // Get last entry
+            if(data && data.length > 0) {
+                const latest = data[data.length - 1];
+                const kp = latest.kp_index;
+                
+                document.getElementById("astro-kp").textContent = kp.toFixed(1);
+                
+                // Update bar (KP goes roughly 0-9)
+                const pct = (kp / 9) * 100;
+                const bar = document.getElementById("kp-bar");
+                bar.style.width = `${pct}%`;
+                
+                if(kp < 4) {
+                    bar.className = "progress-bar bg-success";
+                    document.getElementById("astro-aurora-text").textContent = "Klid. Polární záře není pravděpodobná.";
+                } else if (kp < 6) {
+                    bar.className = "progress-bar bg-warning";
+                    document.getElementById("astro-aurora-text").textContent = "Zvýšená aktivita! Možná viditelnost na severním obzoru.";
+                } else {
+                    bar.className = "progress-bar bg-danger";
+                    document.getElementById("astro-aurora-text").textContent = "GEOMAGNETICKÁ BOUŘE! 🚨 Sledujte oblohu!";
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Aurora API Error", err);
+            document.getElementById("astro-kp").textContent = "?";
+            document.getElementById("astro-aurora-text").textContent = "Data nedostupná.";
+        });
+  }
+
+  let issMap = null;
+  let issMarker = null;
+
+  function initISSTracker(lat, lon) {
+      // 1. Init Leaflet Map if not exists
+      if(!issMap && document.getElementById("iss-map")) {
+          issMap = L.map("iss-map").setView([0, 0], 3);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+              subdomains: 'abcd',
+              maxZoom: 19
+          }).addTo(issMap);
+          
+          const issIcon = L.icon({
+              iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
+              iconSize: [50, 30],
+              iconAnchor: [25, 15],
+          });
+          
+          issMarker = L.marker([0, 0], {icon: issIcon}).addTo(issMap);
+      }
+
+      // 2. Fetch Position Loop
+      function updateISSPosition() {
+          if(!document.getElementById("iss-map")) return; // Stop if left page
+          
+          fetch("https://api.wheretheiss.at/v1/satellites/25544")
+            .then(res => res.json())
+            .then(data => {
+                const { latitude, longitude } = data;
+                
+                document.getElementById("iss-lat").textContent = latitude.toFixed(4);
+                document.getElementById("iss-lon").textContent = longitude.toFixed(4);
+                
+                if(issMap && issMarker) {
+                    issMarker.setLatLng([latitude, longitude]);
+                    issMap.panTo([latitude, longitude]);
+                }
+            })
+            .catch(err => console.error("ISS Error", err));
+      }
+      
+      // Initial call
+      updateISSPosition();
+      // Interval
+      // Clear previous interval if exists? ideally yes but for simplicity...
+      // Let's just set one and hope user refreshes or we handle cleanup strictly in SPA, 
+      // but here we are persistent.
+      if(window.issInterval) clearInterval(window.issInterval);
+      window.issInterval = setInterval(updateISSPosition, 5000);
+  }
+
+  // Initial Check for Astro Page
+  if (document.getElementById("astro-content")) {
+    const saved = loadStoredLocation();
+    const loc = getLocationData(saved);
+    if (loc) {
+        initAstroData(loc.lat, loc.lon, loc.name);
+    }
+  }
+
+  setupAddLocationButton("add-loc-astro");
+
 });
