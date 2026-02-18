@@ -882,39 +882,50 @@ document.addEventListener("DOMContentLoaded", () => {
    * Aktualizuje sekci Chytrá doporučení (Lifestyle)
    * @param {Object} current - Aktuální data
    * @param {Object} daily - Denní data
+   * @param {Object} hourly - Hodinová data pro vývoj (migréna)
    */
-  function updateLifestyle(current, daily) {
+  function updateLifestyle(current, daily, hourly) {
     // Helper for updating status
-    const setStatus = (id, valid, warning = false) => {
+    const setStatus = (id, valid, text = null, warning = false) => {
       const el = document.querySelector(`#${id} .status-icon`);
       if (!el) return;
 
+      const card = document.getElementById(id);
+      
       if (warning) {
         el.textContent = "⚠️";
-        el.parentElement.title = "Pozor (hrozí déšť)";
+        if (card) card.title = "Pozor / Výstraha";
       } else if (valid) {
         el.textContent = "✅";
-        el.parentElement.title = "Ideální podmínky";
+        if (card) card.title = "Ideální podmínky";
       } else {
         el.textContent = "❌";
-        el.parentElement.title = "Nevhodné podmínky";
+        if (card) card.title = "Nevhodné podmínky";
       }
+
+      // Optional text update if element exists (for future expansion or tooltips)
+      // For now we rely on icons and static labels mostly,
+      // but we could add dynamic sub-labels if HTML structure supports it.
     };
 
-    // 1. Running (Běhání)
-    // Good: Temp 5-25, Wind < 30, No heavy rain
+    // Prepare data
     const temp = current.temperature_2m;
     const wind = current.wind_speed_10m;
     const precip = current.precipitation;
     const isRaining = precip > 0.5;
+    const humidity = current.relative_humidity_2m;
+    const clouds = current.cloud_cover; 
+    
+    // --- PŮVODNÍ ---
 
+    // 1. Running (Běhání)
+    // Good: Temp 5-25, Wind < 30, No heavy rain
     const runOk = !isRaining && temp >= 5 && temp <= 25 && wind < 30;
     setStatus("lifestyle-running", runOk);
 
     // 2. Drying Laundry (Sušení prádla)
     // Good: No rain, Humidity < 60, Temp > 10
-    const hum = current.relative_humidity_2m;
-    const dryOk = !isRaining && hum < 60 && temp > 10;
+    const dryOk = !isRaining && humidity < 60 && temp > 10;
     setStatus("lifestyle-laundry", dryOk);
 
     // 3. Car Wash (Mytí auta)
@@ -927,21 +938,106 @@ document.addEventListener("DOMContentLoaded", () => {
     let carWarn = false;
 
     if (rainToday > 0.5) {
-      carValid = false; // Raining today
+      carValid = false; 
     } else if (rainTomorrow > 1.5 || probTomorrow > 50) {
-      carWarn = true; // Raining tomorrow
+      carWarn = true; 
     }
-    setStatus("lifestyle-car", carValid, carWarn);
+    setStatus("lifestyle-car", carValid, null, carWarn);
 
     // 4. Stargazing (Pozorování hvězd)
     // Good: Cloud cover < 30, Moon phase near New Moon
-    const clouds = current.cloud_cover; 
     const moon = getMoonPhase();
-    // Nov, Dorůstající srpek, Ubývající srpek are good for dark skies
     const isDarkMoon = moon.name === "Nov" || moon.name.includes("srpek");
-
     const starsOk = clouds < 30 && isDarkMoon;
     setStatus("lifestyle-stars", starsOk);
+
+    // --- NOVÉ ---
+
+    // 5. UV / Opalování (lifestyle-uv)
+    // Logic: UV > 3 Warning (Sunscreen needed), UV > 6 High danger
+    const uvMax = daily.uv_index_max ? daily.uv_index_max[0] : 0;
+    let uvValid = true;
+    let uvWarn = false;
+    
+    // Pro opalování chceme slunce (UV aspoň trochu), ale ne extrém
+    if (uvMax < 2) {
+        uvValid = false; // Moc nízko na opalování
+    } else if (uvMax >= 6) {
+        uvWarn = true; // Pozor, spálíš se
+    }
+    setStatus("lifestyle-uv", uvValid, null, uvWarn);
+
+
+    // 6. Větrání (lifestyle-ventilation)
+    // Logic: Humidity < 70, Temp diff ok? Check simple: Humidity low = good. Low pollen (complex).
+    // Simple: Humidity < 60 is great. Humidity > 80 bad.
+    const ventOk = humidity < 75 && !isRaining;
+    setStatus("lifestyle-ventilation", ventOk);
+
+    // 7. Migréna / Hlava (lifestyle-migraine)
+    // Logic: Change in pressure > 2hPa in last 3 hours OR rapid temp change.
+    // Using hourly surface_pressure.
+    let headacheRisk = false;
+    if (hourly && hourly.surface_pressure) {
+        // Find current hour index
+        const now = new Date();
+        const currentHourIndex = hourly.time.findIndex(t => new Date(t).getTime() >= now.getTime() - 3600000); // approx
+        
+        if (currentHourIndex >= 3) {
+            const pNow = hourly.surface_pressure[currentHourIndex];
+            const pPrev = hourly.surface_pressure[currentHourIndex - 3];
+            if (Math.abs(pNow - pPrev) > 3) {
+                headacheRisk = true;
+            }
+        }
+    }
+    // "Valid" here means "No Risk". So risk = ❌ (valid=false)
+    setStatus("lifestyle-migraine", !headacheRisk, null, headacheRisk); // Warning if risk? Or just X based on connection.
+    // Let's say: Valid (Check) = No Headache. Invalid (Cross) = Headache Risk.
+    
+    // 8. Zalévání zahrady (lifestyle-garden)
+    // Logic: Water if no rain today AND temp > 20. Don't water if rain expected.
+    // Warning: Don't water, rain coming.
+    // Valid: Go water.
+    let gardenAction = false;
+    if (rainToday < 1 && rainTomorrow < 1 && temp > 15) {
+        gardenAction = true;
+    }
+    setStatus("lifestyle-garden", gardenAction);
+
+    // 9. Komáři (lifestyle-mosquito)
+    // Logic: Humid (>70) + Warm (>15).
+    const mosquitoRisk = humidity > 70 && temp > 15;
+    // Valid = No mosquitoes.
+    setStatus("lifestyle-mosquito", !mosquitoRisk, null, mosquitoRisk);
+
+    // 10. Grilování (lifestyle-bbq)
+    const bbqOk = !isRaining && wind < 20 && temp > 15;
+    setStatus("lifestyle-bbq", bbqOk);
+
+    // 11. Kolo (lifestyle-cycling)
+    const bikeOk = !isRaining && wind < 25 && temp > 5 && temp < 30;
+    setStatus("lifestyle-cycling", bikeOk);
+
+    // 12. Venčení psa (lifestyle-dog)
+    // Warning if > 28°C (pavement hot) or heavy rain.
+    let dogOk = true;
+    let dogWarn = false;
+    if (temp > 28) dogWarn = true; // Hot
+    if (isRaining && precip > 2) dogOk = false; // Heavy rain
+    setStatus("lifestyle-dog", dogOk, null, dogWarn);
+
+    // 13. Soláry (lifestyle-solar)
+    // Logic: Sunshine duration > X
+    const sunSeconds = daily.sunshine_duration ? daily.sunshine_duration[0] : 0;
+    const sunHours = sunSeconds / 3600;
+    const solarOk = sunHours > 5;
+    setStatus("lifestyle-solar", solarOk);
+
+    // 14. Mytí oken (lifestyle-window)
+    // Logic: No rain today OR tomorrow.
+    const windowOk = rainToday < 0.1 && rainTomorrow < 0.1;
+    setStatus("lifestyle-window", windowOk);
   }
 
   /**
@@ -957,7 +1053,7 @@ document.addEventListener("DOMContentLoaded", () => {
     errorElement.classList.add("d-none");
     cityTitleElement.textContent = title;
 
-    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&minutely_15=precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover,surface_pressure&minutely_15=precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,uv_index_max,sunshine_duration&hourly=temperature_2m,weather_code,wind_speed_10m,surface_pressure,relative_humidity_2m&timezone=auto`;
 
     fetch(apiUrl)
       .then((response) => {
@@ -970,7 +1066,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCurrentWeather(data.current, data.daily);
         updateForecast(data.daily);
         updateHourlyForecast(data.hourly);
-        updateLifestyle(data.current, data.daily);
+        updateLifestyle(data.current, data.daily, data.hourly);
         updateOutfitRecommendation(data.current);
         updatePrecipitationGraph(data.minutely_15);
 
