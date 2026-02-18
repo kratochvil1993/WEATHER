@@ -4,7 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <!-- server
+    <link rel="icon" type="image/png"
+        href="https://www.jirikratochvil.eu/template/_web/app/weather/fav/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml"
+        href="https://www.jirikratochvil.eu/template/_web/app/weather/fav/favicon.svg" />
+    <link rel="shortcut icon" href="https://www.jirikratochvil.eu/template/_web/app/weather/fav/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180"
+        href="https://www.jirikratochvil.eu/template/_web/app/weather/fav/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Počasí" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="https://www.jirikratochvil.eu/template/_web/app/weather/fav/site.webmanifest" />
+ -->
     <link rel="icon" type="image/png" href="/fav/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/fav/favicon.svg" />
     <link rel="shortcut icon" href="/fav/favicon.ico" />
@@ -42,6 +54,9 @@
         </button>
         <a href="index.html" class="logo text-decoration-none">
             <img src="/images/logo.webp" alt="" class="">
+            <!-- server
+            <img src="https://www.jirikratochvil.eu/template/_web/app/weather/images/logo.webp" alt="" class="">
+             -->
         </a>
     </header>
 
@@ -77,7 +92,7 @@
         </div>
     </div>
 
-    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5">
+    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5 pt-2">
         <!-- Search Section -->
         <div class="row w-100 justify-content-center mb-4">
             <div class="col-lg-7 position-relative">
@@ -251,58 +266,58 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Precipitation Chart Section (Separate) -->
-    <div class="row w-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
-        <div class="col-lg-8">
-            <div class="glass p-4 p-md-5 text-white">
-                <h2 class="mb-4 fw-light text-center"><i class="bi bi-cloud-drizzle me-2"></i>Srážky (příští hodina)
-                </h2>
-                <div id="precip-container">
-                    <div id="precip-chart" class="d-flex justify-content-between align-items-end px-2"
-                        style="height: 150px;">
-                        <!-- Bars injected via JS -->
-                    </div>
-                    <div id="precip-labels" class="d-flex justify-content-between text-white-50 small mt-3 px-2">
-                        <!-- Labels injected via JS -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Hourly Forecast Section -->
-    <div class="row w-100 justify-content-center mt-4">
-        <div class="col-lg-8">
-            <div class="glass p-4 p-md-5 text-white">
-                <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
-                <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
-                    <!-- Tabs injected via JS -->
-                </ul>
-                <div class="tab-content" id="hourly-content">
-                    <!-- Hourly content injected via JS -->
-                    <div class="text-center">
-                        <div class="spinner-border text-light" role="status">
-                            <span class="visually-hidden">Načítání hodinové předpovědi...</span>
+        <!-- Precipitation Chart Section (Separate) -->
+        <div class="row w-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
+            <div class="col-lg-8">
+                <div class="glass p-4 p-md-5 text-white">
+                    <h2 class="mb-4 fw-light text-center"><i class="bi bi-cloud-drizzle me-2"></i>Srážky (příští hodina)
+                    </h2>
+                    <div id="precip-container">
+                        <div id="precip-chart" class="d-flex justify-content-between align-items-end px-2"
+                            style="height: 150px;">
+                            <!-- Bars injected via JS -->
+                        </div>
+                        <div id="precip-labels" class="d-flex justify-content-between text-white-50 small mt-3 px-2">
+                            <!-- Labels injected via JS -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Weather Map Section -->
-    <div class="row w-100 justify-content-center mt-4 mb-5">
-        <div class="col-lg-8">
-            <div class="glass p-4 text-white">
-                <h2 class="mb-4 fw-light text-center">Srážkový Radar</h2>
-                <div id="weather-map" class="rounded overflow-hidden" style="height: 450px; z-index: 1;">
-                    <!-- Map injected via JS -->
+        <!-- Hourly Forecast Section -->
+        <div class="row w-100 justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="glass p-4 p-md-5 text-white">
+                    <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
+                    <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
+                        <!-- Tabs injected via JS -->
+                    </ul>
+                    <div class="tab-content" id="hourly-content">
+                        <!-- Hourly content injected via JS -->
+                        <div class="text-center">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Načítání hodinové předpovědi...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Weather Map Section -->
+        <div class="row w-100 justify-content-center mt-4 mb-5">
+            <div class="col-lg-8">
+                <div class="glass p-4 text-white">
+                    <h2 class="mb-4 fw-light text-center">Srážkový Radar</h2>
+                    <div id="weather-map" class="rounded overflow-hidden" style="height: 450px; z-index: 1;">
+                        <!-- Map injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->
