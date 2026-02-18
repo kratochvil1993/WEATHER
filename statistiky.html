@@ -67,6 +67,15 @@
         </nav>
     </div>
 
+    <!-- Sticky Location Navigation (Global) -->
+    <div class="sticky-nav mb-4" style="top: 70px;">
+        <div class="btn-group" role="group" aria-label="Location Selection">
+            <button type="button" class="btn btn-glass active" id="btn-plzen-stats">Plzeň</button>
+            <button type="button" class="btn btn-glass" id="btn-krimice-stats">Křimice</button>
+            <button type="button" class="btn btn-glass" id="btn-cheznovice-stats">Cheznovice</button>
+        </div>
+    </div>
+
     <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5">
         <div class="row w-100 justify-content-center">
             <div class="col-lg-10">
@@ -102,14 +111,7 @@
                         </div>
                     </div>
 
-                    <!-- Location Buttons -->
-                    <div class="d-flex justify-content-center mb-5">
-                        <div class="btn-group" role="group" aria-label="Location Selection">
-                            <button type="button" class="btn btn-glass active" id="btn-plzen-stats">Plzeň</button>
-                            <button type="button" class="btn btn-glass" id="btn-krimice-stats">Křimice</button>
-                            <button type="button" class="btn btn-glass" id="btn-cheznovice-stats">Cheznovice</button>
-                        </div>
-                    </div>
+
 
                     <div id="stats-content" class="fade-in">
                         <!-- Denní souhrn -->
@@ -259,7 +261,7 @@
             }
         });
     </script>
-    <script src="script.js?v=3"></script>
+
 </body>
 
 </html>

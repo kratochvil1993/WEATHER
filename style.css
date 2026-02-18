@@ -553,3 +553,51 @@ i.bi {
     margin-bottom: 0;
   }
 }
+
+/* Sticky Location Navigation */
+.sticky-nav {
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  top: 70px; /* Adjust based on header height */
+  z-index: 1020;
+  padding: 10px 0;
+  
+  /* background/blur handled via JS class .is-stuck now */
+  transition: all 0.3s ease;
+  
+  /* Simple full width reset relative to viewport/nearest positioned ancestor */
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.sticky-nav.is-stuck {
+  background: rgba(0, 0, 0, 0.15); 
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-radius: 0 0 15px 15px;
+}
+
+/* Add a pseudo-element for background gradient only when actually sticky? 
+   CSS alone can't detect "is stuck" state easily without IntersectionObserver.
+   We will keep it simple: always slightly blurred background strip that blends in.
+*/
+.sticky-nav::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Invisible sentinel for sticky detection */
+.sticky-sentinel {
+    height: 1px;
+    width: 1px;
+    position: absolute;
+    margin-top: -1px; /* Just above the sticky element */
+    visibility: hidden;
+}

@@ -16,6 +16,41 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- Sticky Navigation Logic ---
+  const stickyNav = document.querySelector(".sticky-nav");
+  if (stickyNav) {
+      // Create sentinel element 1px above sticky nav
+      const sentinel = document.createElement("div");
+      sentinel.className = "sticky-sentinel";
+      // Position absolute just above the sticky element's *intended* stuck position
+      // Or just place it before the nav in flow.
+      // The trick: when sentinel scrolls out of view (top -1px), nav is stuck.
+      // But simpler: Sentinel top: -1px relative to sticky container? No.
+      
+      // Let's use a simpler approach: Just a sentinel <div> inserted *before* the nav.
+      // When sentinel rect.bottom < 70 (header height), then nav is stuck.
+      
+      stickyNav.parentNode.insertBefore(sentinel, stickyNav);
+      
+      const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              // If sentinel is NOT intersecting (scrolled past top), adding stuck
+              // But sentinel is 0px height, so this is tricky.
+              // Let's rely on bounding client rect for robust check
+              if (entry.boundingClientRect.top < 70) {
+                  stickyNav.classList.add("is-stuck");
+                  // Always keep centered as per user request
+              } else {
+                  stickyNav.classList.remove("is-stuck");
+              }
+          });
+      }, {
+          threshold: [0, 1],
+          rootMargin: "-71px 0px 0px 0px" // Trigger when element hits header bottom (approx 70px)
+      });
+      
+      observer.observe(sentinel);
+  }
 
   // --- DOM Elements ---
   // DOM Elements
@@ -3510,9 +3545,8 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem("lastSearchData", JSON.stringify(searchData));
           saveLocation("search-result");
           
-          // Deactivate all buttons
-          const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
-          groups.forEach(btn => btn.classList.remove("active"));
+          // Update UI state properly
+          renderLocationButtons();
 
           // Update input
           if (inputElement) {
@@ -3520,34 +3554,14 @@ document.addEventListener("DOMContentLoaded", () => {
               inputElement.classList.add("active");
           }
 
+          // Trigger data load
           if (isHistory === "advanced") {
-            if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
-              [btnPlzenAdv, btnKrimiceAdv, btnCheznoviceAdv].forEach((btn) =>
-                btn.classList.remove("active"),
-              );
-            }
             initAdvancedWeatherData(lat, lon, name);
           } else if (isHistory === "stats") {
-            if (btnPlzenStats && btnKrimiceStats && btnCheznoviceStats) {
-              [btnPlzenStats, btnKrimiceStats, btnCheznoviceStats].forEach((btn) =>
-                btn.classList.remove("active"),
-              );
-            }
             initStatsData(lat, lon, name);
           } else if (isHistory) {
-            if (btnPlzenHist && btnKrimiceHist && btnCheznoviceHist) {
-              [btnPlzenHist, btnKrimiceHist, btnCheznoviceHist].forEach((btn) =>
-                btn.classList.remove("active"),
-              );
-            }
             fetchHistoricalData(lat, lon, name);
           } else {
-            // Reset buttons on main page if needed
-            if (btnPlzen && btnKrimice && btnCheznovice) {
-              [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
-                btn.classList.remove("active"),
-              );
-            }
             fetchWeather(lat, lon, `Počasí ${name}`);
           }
         } else {
@@ -3614,66 +3628,34 @@ document.addEventListener("DOMContentLoaded", () => {
                         `;
 
             item.addEventListener("click", () => {
-              if (inputElement) inputElement.value = place.name;
+              if (inputElement) {
+                  inputElement.value = place.name;
+                  inputElement.classList.add("active");
+              }
               suggestionsElement.classList.add("d-none");
               
               // Store for "Add Location" feature
               lastSearchedLocation = { name: place.name, lat: place.latitude, lon: place.longitude };
               enableAddButton(isHistory);
 
-              if (isHistory === "advanced") {
-                if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
-                  [
-                    btnPlzenAdv,
-                    btnKrimiceAdv,
-                    btnCheznoviceAdv,
-                  ].forEach((btn) => btn.classList.remove("active"));
-                }
-                initAdvancedWeatherData(
-                  place.latitude,
-                  place.longitude,
-                  place.name,
-                );
-              } else if (isHistory === "stats") {
-                if (btnPlzenStats && btnKrimiceStats && btnCheznoviceStats) {
-                  [
-                    btnPlzenStats,
-                    btnKrimiceStats,
-                    btnCheznoviceStats,
-                  ].forEach((btn) => btn.classList.remove("active"));
-                }
-                initStatsData(place.latitude, place.longitude, place.name);
-              } else if (isHistory) {
-                if (btnPlzenHist && btnKrimiceHist && btnCheznoviceHist) {
-                  [
-                    btnPlzenHist,
-                    btnKrimiceHist,
-                    btnCheznoviceHist,
-                  ].forEach((btn) => btn.classList.remove("active"));
-                }
-                fetchHistoricalData(
-                  place.latitude,
-                  place.longitude,
-                  place.name,
-                );
-              } else {
-                fetchWeather(
-                  place.latitude,
-                  place.longitude,
-                  `Počasí ${place.name}`,
-                );
-              }
-              
-              // NEW: Persist search state on suggestion click
+              // Persist search state
               const searchData = { name: place.name, lat: place.latitude, lon: place.longitude };
               localStorage.setItem("lastSearchData", JSON.stringify(searchData));
               saveLocation("search-result");
               
-              // Ensure all location buttons are deactivated
-              const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
-              groups.forEach(btn => btn.classList.remove("active"));
-              
-              if(inputElement) inputElement.classList.add("active");
+              // Update UI state properly
+              renderLocationButtons();
+
+              // Trigger data load
+              if (isHistory === "advanced") {
+                initAdvancedWeatherData(place.latitude, place.longitude, place.name);
+              } else if (isHistory === "stats") {
+                initStatsData(place.latitude, place.longitude, place.name);
+              } else if (isHistory) {
+                fetchHistoricalData(place.latitude, place.longitude, place.name);
+              } else {
+                fetchWeather(place.latitude, place.longitude, `Počasí ${place.name}`);
+              }
             });
 
             suggestionsElement.appendChild(item);
