@@ -694,6 +694,72 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Aktualizuje sekci Chytrá doporučení (Lifestyle)
+   * @param {Object} current - Aktuální data
+   * @param {Object} daily - Denní data
+   */
+  function updateLifestyle(current, daily) {
+    // Helper for updating status
+    const setStatus = (id, valid, warning = false) => {
+      const el = document.querySelector(`#${id} .status-icon`);
+      if (!el) return;
+
+      if (warning) {
+        el.textContent = "⚠️";
+        el.parentElement.title = "Pozor (hrozí déšť)";
+      } else if (valid) {
+        el.textContent = "✅";
+        el.parentElement.title = "Ideální podmínky";
+      } else {
+        el.textContent = "❌";
+        el.parentElement.title = "Nevhodné podmínky";
+      }
+    };
+
+    // 1. Running (Běhání)
+    // Good: Temp 5-25, Wind < 30, No heavy rain
+    const temp = current.temperature_2m;
+    const wind = current.wind_speed_10m;
+    const precip = current.precipitation;
+    const isRaining = precip > 0.5;
+
+    const runOk = !isRaining && temp >= 5 && temp <= 25 && wind < 30;
+    setStatus("lifestyle-running", runOk);
+
+    // 2. Drying Laundry (Sušení prádla)
+    // Good: No rain, Humidity < 60, Temp > 10
+    const hum = current.relative_humidity_2m;
+    const dryOk = !isRaining && hum < 60 && temp > 10;
+    setStatus("lifestyle-laundry", dryOk);
+
+    // 3. Car Wash (Mytí auta)
+    // Warning if rain tomorrow. Bad if rain today.
+    const rainToday = daily.precipitation_sum[0];
+    const rainTomorrow = daily.precipitation_sum[1];
+    const probTomorrow = daily.precipitation_probability_max[1];
+
+    let carValid = true;
+    let carWarn = false;
+
+    if (rainToday > 0.5) {
+      carValid = false; // Raining today
+    } else if (rainTomorrow > 1.5 || probTomorrow > 50) {
+      carWarn = true; // Raining tomorrow
+    }
+    setStatus("lifestyle-car", carValid, carWarn);
+
+    // 4. Stargazing (Pozorování hvězd)
+    // Good: Cloud cover < 30, Moon phase near New Moon
+    const clouds = current.cloud_cover; 
+    const moon = getMoonPhase();
+    // Nov, Dorůstající srpek, Ubývající srpek are good for dark skies
+    const isDarkMoon = moon.name === "Nov" || moon.name.includes("srpek");
+
+    const starsOk = clouds < 30 && isDarkMoon;
+    setStatus("lifestyle-stars", starsOk);
+  }
+
+  /**
    * Stáhne aktuální a předpovědní data počasí z Open-Meteo API
    * @param {number} lat - Zeměpisná šírka
    * @param {number} lon - Zeměpisná délka
@@ -706,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
     errorElement.classList.add("d-none");
     cityTitleElement.textContent = title;
 
-    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
 
     fetch(apiUrl)
       .then((response) => {
@@ -719,6 +785,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCurrentWeather(data.current, data.daily);
         updateForecast(data.daily);
         updateHourlyForecast(data.hourly);
+        updateLifestyle(data.current, data.daily);
 
         loadingElement.classList.add("d-none");
         contentElement.classList.remove("d-none");
