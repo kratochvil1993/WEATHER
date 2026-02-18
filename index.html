@@ -209,6 +209,8 @@
                     </div>
                 </div>
 
+
+
                 <div class="row g-3">
                     <div class="col-6 col-md-3">
                         <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
@@ -241,6 +243,25 @@
                             <span class="fw-bold mb-1">Pozorování hvězd</span>
                             <span class="status-icon fs-3">--</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Precipitation Chart Section (Separate) -->
+    <div class="row w-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
+        <div class="col-lg-8">
+            <div class="glass p-4 p-md-5 text-white">
+                <h2 class="mb-4 fw-light text-center"><i class="bi bi-cloud-drizzle me-2"></i>Srážky (příští hodina)
+                </h2>
+                <div id="precip-container">
+                    <div id="precip-chart" class="d-flex justify-content-between align-items-end px-2"
+                        style="height: 150px;">
+                        <!-- Bars injected via JS -->
+                    </div>
+                    <div id="precip-labels" class="d-flex justify-content-between text-white-50 small mt-3 px-2">
+                        <!-- Labels injected via JS -->
                     </div>
                 </div>
             </div>

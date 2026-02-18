@@ -750,6 +750,100 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Vykreslí graf srážek pro příští hodinu (4 intervaly po 15 min)
+   * @param {Object} minutely15 - Data z API (minutely_15)
+   */
+  function updatePrecipitationGraph(minutely15) {
+    // New wrapper element logic
+    const wrapper = document.getElementById("precip-section-wrapper");
+    // Inner elements are now inside the wrapper basically, but IDs are unique so querySelector/getElementById works
+    const chart = document.getElementById("precip-chart");
+    const labels = document.getElementById("precip-labels");
+
+    // Check availability
+    if (!minutely15 || !minutely15.precipitation || !wrapper) {
+      if (wrapper) wrapper.classList.add("d-none");
+      return;
+    }
+
+    // --- TIME FIX LOGIC ---
+    // API returns times as ISO strings (e.g. "2023-10-27T10:00") in the requested timezone or UTC.
+    // Since we used timezone=auto, they should be relatively local, BUT comparing strings is risky.
+    // Better strategy: Find the first time slot that is > (now - 15 minutes).
+    // We want to show "Current" slot + 3 future ones.
+    
+    const nowMs = Date.now();
+    let startIndex = -1;
+
+    // Iterate to find the nearest slot
+    for (let i = 0; i < minutely15.time.length; i++) {
+        const t = new Date(minutely15.time[i]).getTime();
+        // If time is within the last 15 minutes or in future, take it
+        // (Step is 15 mins = 900000 ms)
+        if (t >= nowMs - 900000) {
+            startIndex = i;
+            break;
+        }
+    }
+    
+    // Safety check
+    if (startIndex === -1 || startIndex + 4 > minutely15.time.length) {
+      wrapper.classList.add("d-none");
+      return;
+    }
+
+    // Extract next 4 quarters (1 hour)
+    const precips = minutely15.precipitation.slice(startIndex, startIndex + 4);
+    const times = minutely15.time.slice(startIndex, startIndex + 4);
+
+    // Show wrapper
+    wrapper.classList.remove("d-none");
+    chart.innerHTML = "";
+    labels.innerHTML = "";
+
+    // Find max for scaling (min 1mm for visibility in graph, if all 0 then scale doesn't matter much)
+    const maxVal = Math.max(...precips, 1.0);
+
+    precips.forEach((amount, i) => {
+      // 1. Bar
+      const height = (amount / maxVal) * 100;
+      
+      const barContainer = document.createElement("div");
+      barContainer.className = "d-flex flex-column align-items-center justify-content-end position-relative";
+      barContainer.style.width = "20%"; // Spacing
+      barContainer.style.height = "100%";
+
+      // Value label on top of bar if > 0
+      const valLabel = amount > 0 ? `<span class="small mb-1 fw-bold text-warning">${amount} mm</span>` : "";
+      
+      // Bar visual - Blue if rain, faint gray line if dry to show "active" status
+      // We use a minimum height of 4px for "dry" just to show the baseline
+      const isRain = amount > 0;
+      // const bgColor = isRain ? "#4fc3f7" : "rgba(255,255,255,0.1)"; 
+      // Use gradient for rain
+      const bgStyle = isRain ? "background: linear-gradient(to top, #4fc3f7, #6ff7ff);" : "background: rgba(255,255,255,0.1);";
+      const hPercent = isRain ? Math.max(height, 5) : 1; // 1% height for 0 rain (baseline)
+
+      barContainer.innerHTML = `
+        ${valLabel}
+        <div class="w-100 rounded-top" style="height: ${hPercent}%; ${bgStyle} transition: height 1s; box-shadow: ${isRain ? '0 0 10px rgba(79, 195, 247, 0.5)' : 'none'}"></div>
+        ${isRain ? '<i class="bi bi-cloud-drizzle-fill text-info mt-2 position-absolute" style="bottom: -25px; opacity:0.8"></i>' : ''} 
+      `;
+      chart.appendChild(barContainer);
+
+      // 2. Time Label
+      const tDate = new Date(times[i]);
+      const tStr = tDate.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
+      
+      const labelDiv = document.createElement("div");
+      labelDiv.className = "text-center";
+      labelDiv.style.width = "20%"; 
+      labelDiv.innerHTML = `<span class="fw-light small">${tStr}</span>`;
+      labels.appendChild(labelDiv);
+    });
+  }
+
+  /**
    * Aktualizuje sekci Chytrá doporučení (Lifestyle)
    * @param {Object} current - Aktuální data
    * @param {Object} daily - Denní data
@@ -828,7 +922,7 @@ document.addEventListener("DOMContentLoaded", () => {
     errorElement.classList.add("d-none");
     cityTitleElement.textContent = title;
 
-    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&minutely_15=precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
 
     fetch(apiUrl)
       .then((response) => {
@@ -843,6 +937,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateHourlyForecast(data.hourly);
         updateLifestyle(data.current, data.daily);
         updateOutfitRecommendation(data.current);
+        updatePrecipitationGraph(data.minutely_15);
 
         loadingElement.classList.add("d-none");
         contentElement.classList.remove("d-none");
