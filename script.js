@@ -694,6 +694,62 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Generuje doporučení oblečení podle pocitové teploty a srážek
+   * @param {Object} current - Aktuální data
+   */
+  function updateOutfitRecommendation(current) {
+    const temp = current.apparent_temperature;
+    const precip = current.precipitation;
+    const isRaining = precip > 0.5;
+    const wind = current.wind_speed_10m;
+
+    const iconEl = document.getElementById("outfit-icon");
+    const textEl = document.getElementById("outfit-text");
+
+    let icon = "bi-person-arms-up"; // Default
+    let text = "Počasí vypadá dobře.";
+
+    if (isRaining) {
+      if (temp < 10) {
+        icon = "bi-umbrella-fill";
+        text = "Vezmi si pláštěnku a teplé oblečení, je sychravo.";
+      } else {
+        icon = "bi-umbrella";
+        text = "Nezapomeň deštník, venku prší.";
+      }
+    } else if (temp < 0) {
+      icon = "bi-snow2";
+      text = "Krutá zima! Zimní bunda, čepice a rukavice jsou nutnost.";
+    } else if (temp < 10) {
+      icon = "bi-person-standing-dress"; // coat approximation icon
+      text = "Je chladno, vezmi si kabát nebo teplejší bundu.";
+    } else if (temp < 18) {
+      icon = "bi-arrow-up-right-circle"; // hoodie/sweatshirt abstraction
+      if (wind > 20) {
+         text = "Fouká vítr, mikina nebo větrovka se bude hodit.";
+      } else {
+         text = "Dnes to vidím na mikinu nebo lehkou bundu.";
+      }
+    } else if (temp < 25) {
+      icon = "bi-emoji-sunglasses";
+      text = "Příjemně teplo, tričko a džíny jsou ideální.";
+    } else {
+      icon = "bi-sun-fill";
+      text = "Horko! Kraťasy, tílko a nezapomeň na pitný režim.";
+    }
+
+    // Set content and animate
+    iconEl.className = `bi ${icon} display-4`;
+    textEl.textContent = text;
+    
+    // Add entrance animation
+    const card = document.getElementById("outfit-card");
+    card.classList.remove("fade-in");
+    void card.offsetWidth; // trigger reflow
+    card.classList.add("fade-in");
+  }
+
+  /**
    * Aktualizuje sekci Chytrá doporučení (Lifestyle)
    * @param {Object} current - Aktuální data
    * @param {Object} daily - Denní data
@@ -772,7 +828,7 @@ document.addEventListener("DOMContentLoaded", () => {
     errorElement.classList.add("d-none");
     cityTitleElement.textContent = title;
 
-    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation,cloud_cover&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
 
     fetch(apiUrl)
       .then((response) => {
@@ -786,6 +842,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateForecast(data.daily);
         updateHourlyForecast(data.hourly);
         updateLifestyle(data.current, data.daily);
+        updateOutfitRecommendation(data.current);
 
         loadingElement.classList.add("d-none");
         contentElement.classList.remove("d-none");
