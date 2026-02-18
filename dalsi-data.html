@@ -75,25 +75,29 @@
 
                     <!-- Search Section -->
                     <div class="row justify-content-center mb-4">
-                        <div class="col-md-8 position-relative">
-                            <div class="d-flex justify-content-center mb-2">
-                                <button class="btn btn-sm btn-glass text-white" type="button" id="current-location-btn">
+                        <div class="col-lg-10 position-relative">
+                            <div class="d-flex flex-column flex-md-row align-items-center gap-2">
+                                <button class="btn btn-glass text-white text-nowrap" type="button"
+                                    id="current-location-btn">
                                     <i class="bi bi-geo-alt-fill me-1"></i> Moje poloha
                                 </button>
+                                <div class="position-relative flex-grow-1 w-100">
+                                    <div class="input-group">
+                                        <input type="text" id="advanced-search-input"
+                                            class="form-control glass-input text-white"
+                                            placeholder="Vyhledejte místo..." aria-label="Hledat místo"
+                                            autocomplete="off">
+                                        <button class="btn btn-glass" type="button" id="advanced-search-button">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                        <button class="btn btn-glass" type="button" id="add-loc-advanced" disabled
+                                            title="Přidat vyhledané místo do oblíbených">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div id="advanced-suggestions-list" class="suggestions-container d-none"></div>
+                                </div>
                             </div>
-                            <div class="input-group">
-                                <input type="text" id="advanced-search-input"
-                                    class="form-control glass-input text-white" placeholder="Vyhledejte místo..."
-                                    aria-label="Hledat místo" autocomplete="off">
-                                <button class="btn btn-glass" type="button" id="advanced-search-button">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                                <button class="btn btn-glass" type="button" id="add-loc-advanced" disabled
-                                    title="Přidat vyhledané místo do oblíbených">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
-                            </div>
-                            <div id="advanced-suggestions-list" class="suggestions-container d-none"></div>
                         </div>
                     </div>
 

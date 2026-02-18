@@ -219,6 +219,10 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Update UI for My Location button (deactivate it if we clicked something else)
       updateMyLocationButtonState(key === 'geolocation');
+
+      // Deactivate search inputs
+      const searchInputs = document.querySelectorAll('.glass-input');
+      searchInputs.forEach(input => input.classList.remove('active'));
   }
 
   /**
@@ -246,6 +250,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const customs = getCustomLocations();
         if (customs[index]) return saved;
     }
+    
+    // Check if it's a search result (not in base or custom buttons)
+    if (saved === "search-result") return "search-result";
+
     return "plzen";
   }
 
@@ -928,6 +936,37 @@ document.addEventListener("DOMContentLoaded", () => {
               }
           } else {
              handleLocationClick("plzen", baseLocations["plzen"]); 
+          }
+      } else if (savedKey === 'search-result') {
+          // Handle persisted search result
+          const searchDataString = localStorage.getItem("lastSearchData");
+          if (searchDataString) {
+              const searchData = JSON.parse(searchDataString);
+              // Set input value
+              const inputId = document.getElementById("advanced-content") ? "advanced-search-input" :
+                              document.getElementById("stats-content") ? "stats-search-input" :
+                              document.getElementById("temperatureChart") ? "history-search-input" :
+                              "search-input";
+              const input = document.getElementById(inputId);
+              if (input) input.value = searchData.name;
+              
+              // Deactivate all buttons
+              const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
+              groups.forEach(btn => btn.classList.remove("active"));
+              
+              // Trigger load
+              if (document.getElementById("advanced-content")) {
+                   initAdvancedWeatherData(searchData.lat, searchData.lon, searchData.name);
+              } else if (document.getElementById("stats-content")) {
+                   initStatsData(searchData.lat, searchData.lon, searchData.name);
+              } else if (document.getElementById("temperatureChart")) {
+                   fetchHistoricalData(searchData.lat, searchData.lon, searchData.name);
+              } else {
+                   fetchWeather(searchData.lat, searchData.lon, `Počasí ${searchData.name}`);
+              }
+              if (input) input.classList.add("active");
+          } else {
+               handleLocationClick("plzen", baseLocations["plzen"]);
           }
       } else if (savedKey.startsWith("custom-")) {
           const index = parseInt(savedKey.split("-")[1]);
@@ -3247,8 +3286,20 @@ document.addEventListener("DOMContentLoaded", () => {
           const lat = result.latitude;
           const lon = result.longitude;
 
+          // Save search result state
+          const searchData = { name: name, lat: lat, lon: lon };
+          localStorage.setItem("lastSearchData", JSON.stringify(searchData));
+          saveLocation("search-result");
+          
+          // Deactivate all buttons
+          const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
+          groups.forEach(btn => btn.classList.remove("active"));
+
           // Update input
-          if (inputElement) inputElement.value = name;
+          if (inputElement) {
+              inputElement.value = name;
+              inputElement.classList.add("active");
+          }
 
           if (isHistory === "advanced") {
             if (btnPlzenAdv && btnKrimiceAdv && btnCheznoviceAdv) {
@@ -3392,12 +3443,18 @@ document.addEventListener("DOMContentLoaded", () => {
                   place.longitude,
                   `Počasí ${place.name}`,
                 );
-                if (btnPlzen && btnKrimice && btnCheznovice) {
-                  [btnPlzen, btnKrimice, btnCheznovice].forEach((btn) =>
-                    btn.classList.remove("active"),
-                  );
-                }
               }
+              
+              // NEW: Persist search state on suggestion click
+              const searchData = { name: place.name, lat: place.latitude, lon: place.longitude };
+              localStorage.setItem("lastSearchData", JSON.stringify(searchData));
+              saveLocation("search-result");
+              
+              // Ensure all location buttons are deactivated
+              const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
+              groups.forEach(btn => btn.classList.remove("active"));
+              
+              if(inputElement) inputElement.classList.add("active");
             });
 
             suggestionsElement.appendChild(item);
