@@ -237,14 +237,18 @@ document.addEventListener("DOMContentLoaded", () => {
       renderLocationButtons(); // Update active state visually immediately
       
       // Determine context and fetch data
+      // Determine context and fetch data
       const isAdvanced = document.getElementById("advanced-content");
       const isStats = document.getElementById("stats-content");
       const isHistory = document.getElementById("temperatureChart"); // Teploty page has this chart
-      
+      const isTimeMachine = document.getElementById("time-machine-content");
+
       if (isAdvanced) {
           initAdvancedWeatherData(loc.lat, loc.lon, loc.name);
       } else if (isStats) {
           initStatsData(loc.lat, loc.lon, loc.name);
+      } else if (isTimeMachine) {
+          initTimeMachineData(loc.lat, loc.lon, loc.name);
       } else if (isHistory) {
           fetchHistoricalData(loc.lat, loc.lon, loc.name);
       } else {
@@ -3811,9 +3815,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ? advancedSuggestionsList
         : isHistory === "stats"
           ? statsSuggestionsList
-          : isHistory
-            ? historySuggestionsList
-            : suggestionsList;
+          : isHistory === "time-machine"
+            ? timeMachineSuggestionsList
+            : isHistory
+              ? historySuggestionsList
+              : suggestionsList;
 
     // Hide suggestions
     if (suggestionsElement) suggestionsElement.classList.add("d-none");
@@ -3849,6 +3855,8 @@ document.addEventListener("DOMContentLoaded", () => {
             initAdvancedWeatherData(lat, lon, name);
           } else if (isHistory === "stats") {
             initStatsData(lat, lon, name);
+          } else if (isHistory === "time-machine") {
+            initTimeMachineData(lat, lon, name);
           } else if (isHistory) {
             fetchHistoricalData(lat, lon, name);
           } else {
@@ -3872,18 +3880,22 @@ document.addEventListener("DOMContentLoaded", () => {
         ? advancedSearchInput
         : isHistory === "stats"
           ? statsSearchInput
-          : isHistory
-            ? historySearchInput
-            : searchInput;
+          : isHistory === "time-machine"
+            ? timeMachineSearchInput
+            : isHistory
+              ? historySearchInput
+              : searchInput;
 
     const suggestionsElement =
       isHistory === "advanced"
         ? advancedSuggestionsList
         : isHistory === "stats"
           ? statsSuggestionsList
-          : isHistory
-            ? historySuggestionsList
-            : suggestionsList;
+          : isHistory === "time-machine"
+            ? timeMachineSuggestionsList
+            : isHistory
+              ? historySuggestionsList
+              : suggestionsList;
 
     if (!suggestionsElement) return;
 
@@ -3941,6 +3953,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 initAdvancedWeatherData(place.latitude, place.longitude, place.name);
               } else if (isHistory === "stats") {
                 initStatsData(place.latitude, place.longitude, place.name);
+              } else if (isHistory === "time-machine") {
+                initTimeMachineData(place.latitude, place.longitude, place.name);
               } else if (isHistory) {
                 fetchHistoricalData(place.latitude, place.longitude, place.name);
               } else {
@@ -3993,6 +4007,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let btnId;
       if (isHistory === "advanced") btnId = "add-loc-advanced";
       else if (isHistory === "stats") btnId = "add-loc-stats";
+      else if (isHistory === "time-machine") btnId = "add-loc-time";
       else if (isHistory === true) btnId = "add-loc-hist";
       else btnId = "add-loc-main";
       
@@ -4017,4 +4032,252 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAddLocationButton("add-loc-hist");
   setupAddLocationButton("add-loc-stats");
   setupAddLocationButton("add-loc-advanced");
+
+  // --- Time Machine Logic ---
+  let timeMachineChartInstance = null;
+  const timeMachineSearchInput = document.getElementById(
+    "time-machine-search-input",
+  );
+  const timeMachineSearchButton = document.getElementById(
+    "time-machine-search-button",
+  );
+  const timeMachineSuggestionsList = document.getElementById(
+    "time-machine-suggestions-list",
+  );
+  const historyDateInput = document.getElementById("history-date");
+
+  // Search Listeners
+  if (timeMachineSearchButton) {
+    timeMachineSearchButton.addEventListener("click", () =>
+      handleSearch(timeMachineSearchInput, "time-machine"),
+    );
+  }
+
+  if (timeMachineSearchInput) {
+    timeMachineSearchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleSearch(timeMachineSearchInput, "time-machine");
+    });
+
+    timeMachineSearchInput.addEventListener(
+      "input",
+      debounce((e) => {
+        fetchSuggestions(e.target.value.trim(), "time-machine");
+      }, 300),
+    );
+  }
+
+  // Close suggestions on click outside
+  document.addEventListener("click", (e) => {
+    if (timeMachineSearchInput && timeMachineSuggestionsList) {
+      if (
+        !timeMachineSearchInput.contains(e.target) &&
+        !timeMachineSuggestionsList.contains(e.target)
+      ) {
+        timeMachineSuggestionsList.classList.add("d-none");
+      }
+    }
+  });
+
+  // Date Change Listener
+  if (historyDateInput) {
+    // Set default date to 1 year ago if empty
+    if (!historyDateInput.value) {
+      const today = new Date();
+      const lastYear = new Date(
+        today.getFullYear() - 1,
+        today.getMonth(),
+        today.getDate(),
+      );
+      historyDateInput.value = lastYear.toISOString().split("T")[0];
+    }
+
+    historyDateInput.addEventListener("change", () => {
+      const saved = loadStoredLocation();
+      const loc = getLocationData(saved);
+      if (loc) {
+        fetchTimeMachineData(loc.lat, loc.lon, historyDateInput.value);
+      }
+    });
+  }
+
+  /**
+   * Inicializuje Stroj Času
+   */
+  function initTimeMachineData(lat, lon, name) {
+    const titleElement = document.querySelector("h1.fw-light");
+    if (titleElement && titleElement.textContent.includes("Stroj Času")) {
+      // Just in case we want to update title
+    }
+
+    // Default date if not set
+    if (historyDateInput && !historyDateInput.value) {
+      const today = new Date();
+      const lastYear = new Date(
+        today.getFullYear() - 1,
+        today.getMonth(),
+        today.getDate(),
+      );
+      historyDateInput.value = lastYear.toISOString().split("T")[0];
+    }
+    
+    if (historyDateInput) {
+        fetchTimeMachineData(lat, lon, historyDateInput.value);
+    }
+  }
+
+  /**
+   * Stáhne a porovná data pro Stroj Času
+   */
+  function fetchTimeMachineData(lat, lon, dateString) {
+    const loadingEl = document.getElementById("time-machine-loading");
+    if (loadingEl) loadingEl.classList.remove("d-none");
+
+    // Fetch Historical Data
+    // https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.41&start_date=2023-02-18&end_date=2023-02-18&hourly=temperature_2m
+    const histUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateString}&end_date=${dateString}&hourly=temperature_2m&timezone=auto`;
+
+    // Fetch Current Forecast (for comparison)
+    const currentUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&timezone=auto&forecast_days=1`;
+
+    Promise.all([
+      fetch(histUrl).then((res) => res.json()),
+      fetch(currentUrl).then((res) => res.json()),
+    ])
+      .then(([histData, currentData]) => {
+        if (!histData.hourly || !currentData.hourly) {
+          throw new Error("Incomplete data");
+        }
+
+        renderTimeMachineChart(histData.hourly, currentData.hourly, dateString);
+        updateTimeMachineSummary(histData.hourly, currentData.hourly, dateString);
+
+        if (loadingEl) loadingEl.classList.add("d-none");
+      })
+      .catch((err) => {
+        console.error("Error fetching time machine data:", err);
+        if (loadingEl) loadingEl.classList.add("d-none");
+        alert("Nepodařilo se načíst historická data pro toto datum.");
+      });
+  }
+
+  function updateTimeMachineSummary(histHourly, currentHourly, dateString) {
+      // Calculate avg temp for "daytime" (e.g., 8:00 - 20:00) or daily max
+      const getMax = (arr) => Math.max(...arr);
+      
+      const histMax = getMax(histHourly.temperature_2m);
+      const currentMax = getMax(currentHourly.temperature_2m);
+
+      document.getElementById("historical-temp-display").textContent = `${histMax.toFixed(1)}°C`;
+      document.getElementById("current-temp-display").textContent = `${currentMax.toFixed(1)}°C`;
+      
+      const dateObj = new Date(dateString);
+      document.getElementById("historical-date-display").textContent = dateObj.toLocaleDateString("cs-CZ");
+
+      const diff = currentMax - histMax;
+      const diffDisplay = document.getElementById("difference-display");
+      
+      if (diff > 1) {
+          diffDisplay.innerHTML = `Dnes je o <span class="fw-bold text-warning">${diff.toFixed(1)}°C tepleji</span> než tehdy. 🔥`;
+      } else if (diff < -1) {
+          diffDisplay.innerHTML = `Dnes je o <span class="fw-bold text-info">${Math.abs(diff).toFixed(1)}°C chladněji</span> než tehdy. ❄️`;
+      } else {
+          diffDisplay.innerHTML = `Teploty jsou <span class="fw-bold">téměř stejné</span> jako tehdy. ⚖️`;
+      }
+  }
+
+  function renderTimeMachineChart(histHourly, currentHourly, dateString) {
+    const ctx = document.getElementById("timeMachineChart");
+    if (!ctx) return;
+    
+    // Robust destroy
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) existingChart.destroy();
+
+    const labels = [];
+    // Assume 24 hours
+    for (let i = 0; i < 24; i++) {
+        labels.push(`${i}:00`);
+    }
+
+    // Prepare data arrays (slice first 24h just in case)
+    const histTemps = histHourly.temperature_2m.slice(0, 24);
+    const currentTemps = currentHourly.temperature_2m.slice(0, 24);
+    
+    // Determine year for label
+    const histYear = new Date(dateString).getFullYear();
+
+    timeMachineChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Dnešní teplota (°C)",
+            data: currentTemps,
+            borderColor: "#ffffff",
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 6
+          },
+          {
+            label: `Teplota ${histYear} (°C)`,
+            data: histTemps,
+            borderColor: "#0dcaf0", // Cyan/Info
+            backgroundColor: "rgba(13, 202, 240, 0.05)",
+            borderWidth: 3,
+            borderDash: [5, 5],
+            tension: 0.4,
+            fill: false,
+            pointRadius: 0,
+            pointHoverRadius: 6
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+          legend: { labels: { color: "rgba(255,255,255,0.9)" } },
+          tooltip: {
+            backgroundColor: "rgba(0,0,0,0.8)",
+            titleColor: "white",
+            bodyColor: "white",
+            callbacks: {
+                title: (context) => {
+                    return `${context[0].label} hodin`;
+                }
+            }
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: "rgba(255,255,255,0.7)" },
+            grid: { color: "rgba(255,255,255,0.1)" },
+          },
+          y: {
+            ticks: { color: "rgba(255,255,255,0.7)" },
+            grid: { color: "rgba(255,255,255,0.1)" },
+          },
+        },
+      },
+    });
+  }
+
+  // Initial Check for Time Machine Page
+  if (document.getElementById("time-machine-content")) {
+    const saved = loadStoredLocation();
+    const loc = getLocationData(saved);
+    if (loc) {
+        initTimeMachineData(loc.lat, loc.lon, loc.name);
+    }
+  }
+
+  setupAddLocationButton("add-loc-time");
 });

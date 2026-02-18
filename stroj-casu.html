@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/fav/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/fav/favicon.svg" />
+    <link rel="shortcut icon" href="/fav/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/fav/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Počasí" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/fav/site.webmanifest" />
+
+    <title>Stroj Času - Počasí</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css?v=5">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js?v=5" defer></script>
+</head>
+
+<body>
+    <div class="video-background">
+        <div class="overlay"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <button class="menu-toggle btn icon-only" id="menu-toggle" aria-label="Menu">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+        <a href="index.html" class="logo text-decoration-none">
+
+            <img src="https://www.jirikratochvil.eu/template/_web/app/weather/images/logo.webp" alt="" class="">
+
+        </a>
+        <button class="btn icon-only ms-auto" id="refresh-button" aria-label="Aktualizovat">
+            <i class="bi bi-arrow-clockwise fs-4"></i>
+        </button>
+    </header>
+
+    <!-- Side Navigation Panel -->
+    <div class="side-panel glass" id="side-panel">
+        <div class="d-flex justify-content-end p-3">
+            <button class="btn btn-sm btn-glass icon-only" id="menu-close" aria-label="Zavřít menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <nav class="nav flex-column p-4">
+            <a class="nav-link text-white fs-5 mb-3" href="index.html">
+                <i class="bi bi-house-door me-2"></i> Úvod
+            </a>
+            <a class="nav-link text-white fs-5 mb-3 active-link" href="stroj-casu.html">
+                <i class="bi bi-hourglass-split me-2"></i> Stroj Času
+            </a>
+            <a class="nav-link text-white fs-5 mb-3" href="teploty.html">
+                <i class="bi bi-thermometer-half me-2"></i> Teploty
+            </a>
+            <a class="nav-link text-white fs-5 mb-3" href="dalsi-data.html">
+                <i class="bi bi-cloud-sun me-2"></i> Další data
+            </a>
+            <a class="nav-link text-white fs-5 mb-3" href="statistiky.html">
+                <i class="bi bi-graph-up-arrow me-2"></i> Statistiky &amp; trendy
+            </a>
+        </nav>
+    </div>
+
+    <!-- Sticky Location Navigation -->
+    <div class="sticky-nav mb-4" style="top: 70px;">
+        <div class="btn-group" role="group" aria-label="Location Selection">
+            <button type="button" class="btn btn-glass active" id="btn-plzen">Plzeň</button>
+            <button type="button" class="btn btn-glass" id="btn-krimice">Křimice</button>
+            <button type="button" class="btn btn-glass" id="btn-cheznovice">Cheznovice</button>
+        </div>
+    </div>
+
+    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5 pt-2">
+        <!-- Search Section -->
+        <div class="row w-100 justify-content-center mb-4">
+            <div class="col-lg-7 position-relative">
+                <div class="d-flex flex-column flex-md-row align-items-center gap-2">
+                    <button class="btn btn-glass text-white text-nowrap" type="button" id="current-location-btn">
+                        <i class="bi bi-geo-alt-fill me-1"></i> Moje poloha
+                    </button>
+                    <div class="position-relative flex-grow-1 w-100">
+                        <div class="input-group">
+                            <input type="text" id="time-machine-search-input"
+                                class="form-control glass-input text-white"
+                                placeholder="Zadejte město pro cestu časem..." aria-label="Hledat město"
+                                autocomplete="off">
+                            <button class="btn btn-glass" type="button" id="time-machine-search-button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            <button class="btn btn-glass" type="button" id="add-loc-time" disabled
+                                title="Přidat vyhledané místo do oblíbených">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                        <div id="time-machine-suggestions-list" class="suggestions-container d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row w-100 justify-content-center" id="time-machine-content">
+            <div class="col-lg-10">
+                <div class="glass p-4 p-md-5 text-white h-100">
+                    <h1 class="mb-4 fw-light text-center">⏳ Stroj Času</h1>
+
+                    <!-- Controls -->
+                    <div class="row g-3 mb-5 align-items-end justify-content-center">
+                        <div class="col-md-5">
+                            <label for="history-date" class="form-label text-white-50">Vyberte datum v
+                                minulosti:</label>
+                            <input type="date" id="history-date" class="form-control glass-input text-white">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label text-white-50 d-block">Rychlé volby:</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-glass text-white" onclick="setHistoryDate(-1)">-1
+                                    Rok</button>
+                                <button class="btn btn-sm btn-glass text-white" onclick="setHistoryDate(-5)">-5
+                                    Let</button>
+                                <button class="btn btn-sm btn-glass text-white" onclick="setHistoryDate(-10)">-10
+                                    Let</button>
+                                <button class="btn btn-sm btn-glass text-white" onclick="setHistoryDate(-20)">-20
+                                    Let</button>
+                                <button class="btn btn-sm btn-glass text-white" onclick="setHistoryDate(-50)">-50
+                                    Let</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Summary -->
+                    <div class="row g-3 mb-4 text-center">
+                        <div class="col-6">
+                            <div class="p-3 border border-white border-opacity-25 rounded-3 bg-white bg-opacity-10">
+                                <h3 class="fw-bold mb-0 text-white" id="current-temp-display">--°C</h3>
+                                <small class="text-uppercase text-white-50">Dnes</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border border-white border-opacity-25 rounded-3 bg-white bg-opacity-10">
+                                <h3 class="fw-bold mb-0 text-info" id="historical-temp-display">--°C</h3>
+                                <small class="text-uppercase text-info opacity-75"
+                                    id="historical-date-display">Minulost</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="difference-display" class="text-center mb-4 fs-5 fw-light">
+                        <!-- Text injected via JS -->
+                    </div>
+
+                    <!-- Chart -->
+                    <div style="height: 400px;">
+                        <canvas id="timeMachineChart"></canvas>
+                    </div>
+
+                    <div id="time-machine-loading" class="d-none text-center mt-3">
+                        <div class="spinner-border text-light" role="status">
+                            <span class="visually-hidden">Načítání historie...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Menu Handlers -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Menu Logic
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidePanel = document.getElementById('side-panel');
+            const menuClose = document.getElementById('menu-close');
+
+            if (menuToggle && sidePanel) {
+                menuToggle.onclick = function (e) {
+                    e.stopPropagation();
+                    sidePanel.classList.toggle('open');
+                };
+
+                if (menuClose) {
+                    menuClose.onclick = function (e) {
+                        e.stopPropagation();
+                        sidePanel.classList.remove('open');
+                    };
+                }
+
+                document.onclick = function (e) {
+                    if (sidePanel.classList.contains('open') &&
+                        !sidePanel.contains(e.target) &&
+                        e.target !== menuToggle) {
+                        sidePanel.classList.remove('open');
+                    }
+                };
+            }
+        });
+
+        // Quick date setters
+        function setHistoryDate(yearsOffset) {
+            const today = new Date();
+            const targetDate = new Date(today.getFullYear() + yearsOffset, today.getMonth(), today.getDate());
+
+            // Format to YYYY-MM-DD for input type="date"
+            const yyyy = targetDate.getFullYear();
+            const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(targetDate.getDate()).padStart(2, '0');
+
+            const dateInput = document.getElementById('history-date');
+            if (dateInput) {
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+                // Trigger change event manually to update data
+                dateInput.dispatchEvent(new Event('change'));
+            }
+        }
+    </script>
+</body>
+
+</html>
