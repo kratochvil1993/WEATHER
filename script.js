@@ -1173,74 +1173,132 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZATION LOGIC ---
   
-  // Check what location to load on startup
-  const savedKey = loadStoredLocation();
-  
-  // Wrap initialization in try-catch to ensure UI keeps working even if storage data is corrupted
-  try {
-      if (savedKey === 'geolocation') {
-          const geoDataString = localStorage.getItem("geoData");
-          if (geoDataString) {
-              try {
-                  const geoData = JSON.parse(geoDataString);
-                  handleLocationClick('geolocation', geoData);
-              } catch(e) {
-                  console.error("Error parsing geoData", e);
-                  handleLocationClick("plzen", baseLocations["plzen"]);
-              }
-          } else {
-             handleLocationClick("plzen", baseLocations["plzen"]); 
+  // --- AUTO REFRESH LOGIC ---
+  let lastFetchTime = Date.now();
+  const REFRESH_THRESHOLD = 10 * 60 * 1000; // 10 minut
+
+  function refreshWeatherData() {
+      // Update timestamp
+      lastFetchTime = Date.now();
+
+      // Animation for button
+      const refreshBtn = document.getElementById("refresh-button");
+      if (refreshBtn) {
+          const icon = refreshBtn.querySelector("i");
+          if (icon) {
+              icon.classList.add("spin-animation");
+              // Remove animation after 1s (visual feedback)
+              setTimeout(() => {
+                  icon.classList.remove("spin-animation");
+              }, 1000);
           }
-      } else if (savedKey === 'search-result') {
-          // Handle persisted search result
-          const searchDataString = localStorage.getItem("lastSearchData");
-          if (searchDataString) {
-              const searchData = JSON.parse(searchDataString);
-              // Set input value
-              const inputId = document.getElementById("advanced-content") ? "advanced-search-input" :
-                              document.getElementById("stats-content") ? "stats-search-input" :
-                              document.getElementById("temperatureChart") ? "history-search-input" :
-                              "search-input";
-              const input = document.getElementById(inputId);
-              if (input) input.value = searchData.name;
-              
-              // Deactivate all buttons
-              const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
-              groups.forEach(btn => btn.classList.remove("active"));
-              
-              // Trigger load
-              if (document.getElementById("advanced-content")) {
-                   initAdvancedWeatherData(searchData.lat, searchData.lon, searchData.name);
-              } else if (document.getElementById("stats-content")) {
-                   initStatsData(searchData.lat, searchData.lon, searchData.name);
-              } else if (document.getElementById("temperatureChart")) {
-                   fetchHistoricalData(searchData.lat, searchData.lon, searchData.name);
-              } else {
-                   fetchWeather(searchData.lat, searchData.lon, `Počasí ${searchData.name}`);
-              }
-              if (input) input.classList.add("active");
-          } else {
-               handleLocationClick("plzen", baseLocations["plzen"]);
-          }
-      } else if (savedKey.startsWith("custom-")) {
-          const index = parseInt(savedKey.split("-")[1]);
-          const customs = getCustomLocations();
-          if (customs[index]) {
-               handleLocationClick(savedKey, customs[index]);
-          } else {
-               handleLocationClick("plzen", baseLocations["plzen"]);
-          }
-      } else {
-          // Base location
-          const loc = baseLocations[savedKey] || baseLocations["plzen"]; // Default fallback
-          handleLocationClick(savedKey, loc);
       }
-  } catch (initError) {
-      console.error("Initialization error:", initError);
-      // Last resort fallback
+
+      // Check what location to load
+      const savedKey = loadStoredLocation();
+      
+      // Wrap initialization in try-catch to ensure UI keeps working even if storage data is corrupted
       try {
-          handleLocationClick("plzen", baseLocations["plzen"]);
-      } catch (e) { console.error("Critical fallback error", e); }
+          if (savedKey === 'geolocation') {
+              const geoDataString = localStorage.getItem("geoData");
+              if (geoDataString) {
+                  try {
+                      const geoData = JSON.parse(geoDataString);
+                      handleLocationClick('geolocation', geoData);
+                  } catch(e) {
+                      console.error("Error parsing geoData", e);
+                      handleLocationClick("plzen", baseLocations["plzen"]);
+                  }
+              } else {
+                 handleLocationClick("plzen", baseLocations["plzen"]); 
+              }
+          } else if (savedKey === 'search-result') {
+              // Handle persisted search result
+              const searchDataString = localStorage.getItem("lastSearchData");
+              if (searchDataString) {
+                  const searchData = JSON.parse(searchDataString);
+                  // Set input value
+                  const inputId = document.getElementById("advanced-content") ? "advanced-search-input" :
+                                  document.getElementById("stats-content") ? "stats-search-input" :
+                                  document.getElementById("temperatureChart") ? "history-search-input" :
+                                  "search-input";
+                  const input = document.getElementById(inputId);
+                  if (input) input.value = searchData.name;
+                  
+                  // Deactivate all buttons
+                  const groups = document.querySelectorAll('.btn-group[aria-label="Location Selection"] button');
+                  groups.forEach(btn => btn.classList.remove("active"));
+                  
+                  // Trigger load
+                  if (document.getElementById("advanced-content")) {
+                       initAdvancedWeatherData(searchData.lat, searchData.lon, searchData.name);
+                  } else if (document.getElementById("stats-content")) {
+                       initStatsData(searchData.lat, searchData.lon, searchData.name);
+                  } else if (document.getElementById("temperatureChart")) {
+                       fetchHistoricalData(searchData.lat, searchData.lon, searchData.name);
+                  } else {
+                       fetchWeather(searchData.lat, searchData.lon, `Počasí ${searchData.name}`);
+                  }
+                  if (input) input.classList.add("active");
+              } else {
+                   handleLocationClick("plzen", baseLocations["plzen"]);
+              }
+          } else if (savedKey.startsWith("custom-")) {
+              const index = parseInt(savedKey.split("-")[1]);
+              const customs = getCustomLocations();
+              if (customs[index]) {
+                   handleLocationClick(savedKey, customs[index]);
+              } else {
+                   handleLocationClick("plzen", baseLocations["plzen"]);
+              }
+          } else {
+              // Base location
+              const loc = baseLocations[savedKey] || baseLocations["plzen"]; // Default fallback
+              handleLocationClick(savedKey, loc);
+          }
+      } catch (initError) {
+          console.error("Initialization error:", initError);
+          // Last resort fallback
+          try {
+              handleLocationClick("plzen", baseLocations["plzen"]);
+          } catch (e) { console.error("Critical fallback error", e); }
+      }
+  }
+
+  // Initial load
+  refreshWeatherData();
+
+  // Helper pro kontrolu stáří dat
+  function checkAndRefreshIfNeeded() {
+      const now = Date.now();
+      const age = now - lastFetchTime;
+      // Pokud jsou data starší než threshold (10 min)
+      if (age > REFRESH_THRESHOLD) {
+          console.log(`Data jsou stará ${Math.round(age/1000)}s - spouštím refresh.`);
+          refreshWeatherData();
+      }
+  }
+
+  // 1. Kontrola při návratu do aplikace (Visibility API)
+  document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+          checkAndRefreshIfNeeded();
+      }
+  });
+
+  // 2. Pravidelný interval (každých 10 minut když je aplikace otevřená)
+  setInterval(() => {
+      checkAndRefreshIfNeeded();
+  }, REFRESH_THRESHOLD); 
+
+
+  // Validace a přidání event listeneru pro tlačítko aktualizace
+  const refreshButton = document.getElementById("refresh-button");
+  if (refreshButton) {
+      refreshButton.addEventListener("click", (e) => {
+          e.preventDefault();
+          refreshWeatherData();
+      });
   }
   
   // Note: Old individual render logic removed in favor of unified initialization above.

@@ -52,3 +52,23 @@ body {
 #menu-toggle:hover {
     background: var(--glass-hover-bg);
 }
+
+#refresh-button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: #fff;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+#refresh-button:hover {
+    background: var(--glass-hover-bg);
+    color: var(--glass-accent);
+    box-shadow: 0 0 15px var(--glow-color);
+}
