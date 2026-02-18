@@ -978,7 +978,8 @@ document.addEventListener("DOMContentLoaded", () => {
         contentElement.classList.remove("d-none");
 
         // Initialize/Update Map
-        initMap(lat, lon);
+        // Initialize/Update Map
+        initMap(lat, lon, title);
       })
       .catch((error) => {
         console.error("There was a problem with the fetch operation:", error);
@@ -1168,6 +1169,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let chartInstanceMax = null;
   let weatherMap = null;
   let radarLayer = null;
+  let satelliteLayer = null;
+  let layerControl = null;
+  let currentMarker = null;
+
+  // Animation globals
+  let animationTimer = null;
+  let radarLayers = []; // Array of { timestamp, layerObject }
+  let currentFrameIndex = 0;
+  let isPlaying = false;
 
   let mapInitialized = false;
 
@@ -1304,24 +1314,71 @@ document.addEventListener("DOMContentLoaded", () => {
   // Note: Old individual render logic removed in favor of unified initialization above.
 
   /**
-   * Inicializuje interaktivní mapu s radarovými daty počasí
+   * Inicializuje interaktivní mapu s radarovými daty a vrstvami
    * @param {number} lat - Zeměpisná šírka
    * @param {number} lon - Zeměpisná délka
+   * @param {string} name - Název místa pro marker
    */
-  function initMap(lat, lon) {
+  /**
+   * Inicializuje interaktivní mapu s radarovými daty, vrstvami a animací
+   * @param {number} lat
+   * @param {number} lon
+   * @param {string} name
+   */
+  function initMap(lat, lon, name = "Vybraná lokalita") {
     const mapContainer = document.getElementById("weather-map");
     if (!mapContainer) return;
 
     if (weatherMap) {
       weatherMap.setView([lat, lon], 8);
+      
+      // Update marker
+      if (currentMarker) weatherMap.removeLayer(currentMarker);
+      currentMarker = L.marker([lat, lon]).addTo(weatherMap)
+          .bindPopup(name);
+
       setTimeout(() => {
         weatherMap.invalidateSize();
-        updateRadarLayer();
+        // Re-init animation if needed or just let it run
+        // For simplicity, we restart data fetch to ensure fresh location context if needed
+        initRadarAnimation();
       }, 300);
       return;
     }
 
-    // Use IntersectionObserver to initialize map only when it becomes visible
+    // Build Controls UI
+    if (!document.getElementById("map-controls")) {
+        const controlsHTML = `
+            <div id="map-controls" class="map-controls glass d-flex align-items-center gap-3 p-2">
+                <button id="map-play-pause" class="btn btn-sm btn-glass icon-only">
+                    <i class="bi bi-play-fill"></i>
+                </button>
+                <div class="flex-grow-1 position-relative">
+                    <input type="range" id="map-progress" class="form-range" min="0" max="0" value="0" step="1">
+                    <div class="d-flex justify-content-between small text-white-50 mt-1">
+                         <span id="map-time-start">--:--</span>
+                         <span id="map-time-current" class="fw-bold text-white">--:--</span>
+                         <span id="map-time-end">--:--</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        // Insert controls AFTER the map container (or inside a wrapper)
+        // Check if wrapper exists, if not create one or append to parent
+        const parent = mapContainer.parentElement;
+        // Easier: append inside the parent container below the map
+        const controlsContainer = document.createElement("div");
+        controlsContainer.innerHTML = controlsHTML;
+        parent.appendChild(controlsContainer.firstElementChild);
+        
+        // Bind events
+        document.getElementById("map-play-pause").addEventListener("click", togglePlayPause);
+        document.getElementById("map-progress").addEventListener("input", (e) => {
+            pauseAnimation();
+            showFrame(parseInt(e.target.value));
+        });
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -1331,100 +1388,179 @@ document.addEventListener("DOMContentLoaded", () => {
             weatherMap = L.map("weather-map", {
               minZoom: 4,
               maxZoom: 10,
+              scrollWheelZoom: false // Disable scroll zoom
             }).setView([lat, lon], 6);
 
-            // Dark tile layer
-            L.tileLayer(
+            // Base Layers
+            const darkLayer = L.tileLayer(
               "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-              {
-                attribution:
-                  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: "abcd",
-                maxZoom: 20,
-              },
+              { attribution: '&copy; OpenStreetMap & CARTO', subdomains: "abcd", maxZoom: 20, zIndex: 0 }
             ).addTo(weatherMap);
 
-            // Load radar after a delay to ensure map is properly sized
+            const lightLayer = L.tileLayer(
+              "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+              { attribution: '&copy; OpenStreetMap & CARTO', subdomains: "abcd", maxZoom: 20, zIndex: 0 }
+            );
+
+            const baseMaps = { "Tmavý": darkLayer, "Světlý": lightLayer };
+            const overlayMaps = {}; 
+            
+            // We will add radar layer dynamically to control but manage it manually for animation
+            layerControl = L.control.layers(baseMaps, overlayMaps).addTo(weatherMap);
+
+            currentMarker = L.marker([lat, lon]).addTo(weatherMap)
+                .bindPopup(name);
+
             setTimeout(() => {
               weatherMap.invalidateSize();
-              updateRadarLayer();
+              initRadarAnimation();
             }, 300);
 
             observer.disconnect();
           }
         });
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     observer.observe(mapContainer);
   }
 
   /**
-   * Aktualizuje radarovou vrstvu na mapě s nejnovějšími daty RainVieweru
+   * Načte data z RainVieweru a připraví animaci (Past + Nowcast)
    */
-  function updateRadarLayer() {
-    if (!weatherMap) return;
+  function initRadarAnimation() {
+      if (!weatherMap) return;
+      
+      // Cleanup existing
+      pauseAnimation();
+      radarLayers.forEach(frame => {
+          if (weatherMap.hasLayer(frame.layer)) weatherMap.removeLayer(frame.layer);
+          // Remove from control if present (we don't add frames to control usually to avoid clutter)
+      });
+      radarLayers = [];
 
-    // Fetch latest RainViewer data
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (radarLayer) {
-          weatherMap.removeLayer(radarLayer);
-        }
+      fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(res => res.json())
+      .then(data => {
+          // Combine past and nowcast
+          // Adjust logic: RainViewer satellite is separate. We focus on Radar animation here.
+          let frames = [];
+          if (data.radar && data.radar.past) frames = frames.concat(data.radar.past);
+          if (data.radar && data.radar.nowcast) frames = frames.concat(data.radar.nowcast);
+          
+          if (frames.length === 0) return;
 
-        // Use much older timestamp (6th from last) to ensure all tiles are available at all zoom levels
-        // This prevents tiles from disappearing when zooming in
-        const radarData = data.radar.past;
-        const timeIndex = Math.max(0, radarData.length - 6);
-        const latestTime = radarData[timeIndex].time;
-        const radarUrl = `https://tilecache.rainviewer.com/v2/radar/${latestTime}/256/{z}/{x}/{y}/2/1_1.png`;
+          // Prepare layers (hidden by default)
+          frames.forEach(frame => {
+              const layer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${frame.time}/256/{z}/{x}/{y}/2/1_1.png`, {
+                  opacity: 0.8,
+                  maxZoom: 10,
+                  maxNativeZoom: 6,
+                  minZoom: 4,
+                  attribution: 'RainViewer',
+                  zIndex: 100 // Ensure radar is always on top of base maps
+              });
+              
+              // Preload tiles trick: add to map then set opacity 0? 
+              // Or just rely on browser cache. Let's just create objects.
+              radarLayers.push({
+                  time: frame.time,
+                  layer: layer
+              });
+          });
 
-        console.log(
-          "Loading radar tiles from timestamp:",
-          new Date(latestTime * 1000).toLocaleTimeString("cs-CZ"),
-        );
-        console.log("Current map zoom level:", weatherMap.getZoom());
-        console.log("Radar URL pattern:", radarUrl);
+          // Setup Slider
+          const slider = document.getElementById("map-progress");
+          if (slider) {
+              slider.min = 0;
+              slider.max = radarLayers.length - 1;
+              slider.value = radarLayers.length - 1; // Default to latest (usually last past or first nowcast?)
+              // Let's default to last "past" frame, or the very last frame.
+              // Usually users want to see "now".
+              // "now" is the last element of 'past' array.
+              let nowIndex = data.radar.past ? data.radar.past.length - 1 : 0;
+              currentFrameIndex = nowIndex;
+              slider.value = nowIndex;
+          }
+          
+          updateTimeDisplay();
+          
+          // Show initial frame
+          showFrame(currentFrameIndex);
 
-        radarLayer = L.tileLayer(radarUrl, {
-          opacity: 0.8,
-          maxZoom: 10,
-          maxNativeZoom: 6, // Match default zoom - tiles scale beyond this
-          minZoom: 4,
-          attribution:
-            '&copy; <a href="https://www.rainviewer.com/api.html">RainViewer</a>',
-        });
-
-        radarLayer.on("tileerror", (error) => {
-          console.error(
-            "Tile load error at zoom",
-            weatherMap.getZoom(),
-            ":",
-            error,
-          );
-        });
-
-        radarLayer.on("load", () => {
-          console.log(
-            "Radar layer loaded successfully at zoom",
-            weatherMap.getZoom(),
-          );
-        });
-
-        radarLayer.on("tileload", (e) => {
-          console.log("Tile loaded:", e.coords);
-        });
-
-        radarLayer.addTo(weatherMap);
-
-        // Force redraw after adding layer
-        setTimeout(() => {
-          if (weatherMap) weatherMap.invalidateSize();
-        }, 100);
+          // Auto-play? Maybe just let user click play.
+          // Or play once then stop.
       })
-      .catch((err) => console.error("Error fetching radar data:", err));
+      .catch(err => console.error("Error init radar animation:", err));
+  }
+
+  function showFrame(index) {
+      if (index < 0 || index >= radarLayers.length) return;
+      
+      // Remove all radar layers
+      radarLayers.forEach(frame => {
+          if (weatherMap.hasLayer(frame.layer)) weatherMap.removeLayer(frame.layer);
+      });
+      
+      // Add current
+      const frame = radarLayers[index];
+      if (frame) {
+          frame.layer.addTo(weatherMap);
+      }
+      
+      currentFrameIndex = index;
+      
+      // Sync slider
+      const slider = document.getElementById("map-progress");
+      if (slider) slider.value = index;
+      
+      updateTimeDisplay();
+  }
+
+  function updateTimeDisplay() {
+      if (radarLayers.length === 0) return;
+      
+      const startEl = document.getElementById("map-time-start");
+      const endEl = document.getElementById("map-time-end");
+      const currentEl = document.getElementById("map-time-current");
+      
+      const first = new Date(radarLayers[0].time * 1000);
+      const last = new Date(radarLayers[radarLayers.length - 1].time * 1000);
+      const current = new Date(radarLayers[currentFrameIndex].time * 1000);
+      
+      if (startEl) startEl.textContent = first.toLocaleTimeString("cs-CZ", {hour: '2-digit', minute:'2-digit'});
+      if (endEl) endEl.textContent = last.toLocaleTimeString("cs-CZ", {hour: '2-digit', minute:'2-digit'});
+      if (currentEl) currentEl.textContent = current.toLocaleTimeString("cs-CZ", {hour: '2-digit', minute:'2-digit'});
+  }
+
+  function togglePlayPause() {
+      if (isPlaying) {
+          pauseAnimation();
+      } else {
+          playAnimation();
+      }
+  }
+
+  function playAnimation() {
+      if (isPlaying) return;
+      isPlaying = true;
+      
+      const btn = document.getElementById("map-play-pause");
+      if (btn) btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+      
+      animationTimer = setInterval(() => {
+          let next = currentFrameIndex + 1;
+          if (next >= radarLayers.length) next = 0; // Loop
+          showFrame(next);
+      }, 500); // 500ms per frame
+  }
+
+  function pauseAnimation() {
+      isPlaying = false;
+      clearInterval(animationTimer);
+      const btn = document.getElementById("map-play-pause");
+      if (btn) btn.innerHTML = '<i class="bi bi-play-fill"></i>';
   }
 
   let lastSearchedLocation = null;

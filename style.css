@@ -602,6 +602,45 @@ i.bi {
     visibility: hidden;
 }
 
+/* Map Controls */
+.map-controls {
+    margin-top: 15px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+}
+
+#map-progress {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 5px;  
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    margin: 5px 0;
+}
+
+#map-progress::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%; 
+    background: var(--glass-accent);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+#map-progress::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--glass-accent);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
 /* App Header Actions */
 #refresh-button {
     background: transparent;
@@ -631,4 +670,39 @@ i.bi {
 
 .spin-animation {
     animation: spin 1s linear infinite;
+}
+
+/* Custom Leaflet Layers Control */
+.leaflet-control-layers {
+  background: rgba(30, 60, 114, 0.9) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+  color: #fff !important;
+  backdrop-filter: blur(5px);
+}
+
+.leaflet-control-layers-expanded {
+  padding: 10px !important;
+  background: rgba(30, 60, 114, 0.95) !important;
+}
+
+/* Invert icon to make it white */
+.leaflet-control-layers-toggle {
+   filter: brightness(0) invert(1);
+}
+
+.leaflet-control-layers-separator {
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+  margin: 5px 0 !important;
+}
+
+.leaflet-control-layers label {
+    margin-bottom: 5px;
+    cursor: pointer;
+    font-weight: 300;
+}
+
+.leaflet-control-layers label span {
+  color: #eee !important; 
 }
