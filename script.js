@@ -375,6 +375,24 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /**
+   * Synchronizuje barevné téma a pozadí podle aktuálního počasí (pro podstránky)
+   * @param {number} lat - Zeměpisná šířka
+   * @param {number} lon - Zeměpisná délka
+   */
+  function syncAmbientWeather(lat, lon) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`;
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.current) {
+          updateTheme(data.current.temperature_2m);
+          updateBackground(data.current.weather_code);
+        }
+      })
+      .catch((err) => console.error("Error syncing ambient weather:", err));
+  }
+
+  /**
    * Aktualizuje obrázek pozadí podle kódu počasí
    * @param {number} code - WMO kód počasí
    */
@@ -1711,7 +1729,17 @@ document.addEventListener("DOMContentLoaded", () => {
           if (inputElement) inputElement.value = name;
 
           if (isHistory) {
-            fetchHistoricalData(lat, lon, name);
+            if (isHistory === "advanced") {
+                initAdvancedWeatherData(lat, lon, name);
+            } else if (isHistory === "stats") {
+                initStatsData(lat, lon, name);
+            } else if (isHistory === "time-machine") {
+                initTimeMachineData(lat, lon, name);
+            } else if (isHistory === "astro") {
+                initAstroData(lat, lon, name);
+            } else {
+                fetchHistoricalData(lat, lon, name);
+            }
           } else {
             // Reset buttons on main page if needed
             if (btnPlzen && btnKrimice && btnCheznovice) {
@@ -1752,13 +1780,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chartCanvasMean.classList.add("d-none");
     chartCanvasMax.classList.add("d-none");
 
-    // Update Theme based on current temperature
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m`)
-        .then(res => res.json())
-        .then(data => {
-            if(data.current) updateTheme(data.current.temperature_2m);
-        })
-        .catch(console.error);
+    // Sync ambient weather (theme and background) for current location
+    syncAmbientWeather(lat, lon);
 
     // Fetch Data for 1993, 2000, 2023, 2024 and 2025
     // Using archive-api.open-meteo.com
@@ -2162,11 +2185,17 @@ document.addEventListener("DOMContentLoaded", () => {
               suggestionsElement.classList.add("d-none");
 
               if (isHistory) {
-                fetchHistoricalData(
-                  place.latitude,
-                  place.longitude,
-                  place.name,
-                );
+                if (isHistory === "advanced") {
+                  initAdvancedWeatherData(place.latitude, place.longitude, place.name);
+                } else if (isHistory === "stats") {
+                  initStatsData(place.latitude, place.longitude, place.name);
+                } else if (isHistory === "time-machine") {
+                  initTimeMachineData(place.latitude, place.longitude, place.name);
+                } else if (isHistory === "astro") {
+                  initAstroData(place.latitude, place.longitude, place.name);
+                } else {
+                  fetchHistoricalData(place.latitude, place.longitude, place.name);
+                }
               } else {
                 fetchWeather(
                   place.latitude,
@@ -3728,6 +3757,8 @@ document.addEventListener("DOMContentLoaded", () => {
       titleElement.textContent = `Další meteorologická data - ${name}`;
     }
 
+    syncAmbientWeather(lat, lon);
+
     // Original 5 sections
     fetchUVIndex(lat, lon);
 
@@ -3761,7 +3792,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loadingEl) loadingEl.classList.remove("d-none");
     if (errorEl) errorEl.classList.add("d-none");
 
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max&timezone=auto&past_days=30&forecast_days=7`;
+    syncAmbientWeather(lat, lon);
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_min,temperature_2m_max,precipitation_sum,uv_index_max&timezone=auto&past_days=30&forecast_days=7`;
 
     fetch(url)
       .then((res) => {
@@ -3771,10 +3804,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .then((data) => {
         const daily = data.daily;
         if (!daily) throw new Error("Missing daily data");
-
-        if (data.current) {
-             updateTheme(data.current.temperature_2m);
-        }
 
         updateStatsDailySummary(daily);
         renderStatsWeeklyChart(daily);
@@ -4127,6 +4156,8 @@ document.addEventListener("DOMContentLoaded", () => {
    * Inicializuje Stroj Času
    */
   function initTimeMachineData(lat, lon, name) {
+    syncAmbientWeather(lat, lon);
+    
     const titleElement = document.querySelector("h1.fw-light");
     if (titleElement && titleElement.textContent.includes("Stroj Času")) {
       // Just in case we want to update title
@@ -4156,7 +4187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loadingEl) loadingEl.classList.remove("d-none");
 
     // Fetch Historical Data
-    // https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.41&start_date=2023-02-18&end_date=2023-02-18&hourly=temperature_2m
     const histUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateString}&end_date=${dateString}&hourly=temperature_2m&timezone=auto`;
 
     // Fetch Current Forecast (for comparison)
@@ -4348,6 +4378,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (titleElement && titleElement.textContent.includes("Pozorování")) {
       // Could update title if needed
     }
+
+    syncAmbientWeather(lat, lon);
 
     // 1. Star Visibility (Cloud Cover + Moon)
     fetchStarVisibility(lat, lon);
