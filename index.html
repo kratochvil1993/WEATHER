@@ -83,8 +83,8 @@
     </div>
 
     <!-- Sticky Location Navigation (Global) -->
-    <div class="sticky-nav mb-4" style="top: 70px;">
-        <div class="btn-group" role="group" aria-label="Location Selection">
+    <div class="sticky-nav  mb-4" style="top: 70px;">
+        <div class="btn-group px-1 px-md-0" role="group" aria-label="Location Selection">
             <button type="button" class="btn btn-glass active" id="btn-plzen">Plzeň</button>
             <button type="button" class="btn btn-glass" id="btn-krimice">Křimice</button>
             <button type="button" class="btn btn-glass" id="btn-cheznovice">Cheznovice</button>
@@ -102,8 +102,7 @@
                     <div class="position-relative flex-grow-1 w-100">
                         <div class="input-group">
                             <input type="text" id="search-input" class="form-control glass-input text-white"
-                                placeholder="Zadejte město nebo vesnici..." aria-label="Hledat město"
-                                autocomplete="off">
+                                placeholder="Zadej místo" aria-label="Hledat město" autocomplete="off">
                             <button class="btn btn-glass" type="button" id="search-button">
                                 <i class="bi bi-search"></i>
                             </button>
@@ -212,6 +211,26 @@
             </div>
         </div>
 
+        <!-- Hourly Forecast Section -->
+        <div class="row w-100 justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="glass p-4 p-md-5 text-white">
+                    <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
+                    <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
+                        <!-- Tabs injected via JS -->
+                    </ul>
+                    <div class="tab-content" id="hourly-content">
+                        <!-- Hourly content injected via JS -->
+                        <div class="text-center">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Načítání hodinové předpovědi...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Lifestyle Section -->
         <div class="row w-100 justify-content-center mt-4">
             <div class="glass p-4 p-md-5 text-white">
@@ -226,7 +245,6 @@
                         <p class="mb-0 opacity-75 fs-5" id="outfit-text">Načítám doporučení...</p>
                     </div>
                 </div>
-
 
 
                 <div class="row g-3">
@@ -363,6 +381,9 @@
         </div>
 
 
+
+
+
         <!-- Precipitation Chart Section (Separate) -->
         <div class="row w-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
             <div class="col-lg-8">
@@ -376,26 +397,6 @@
                         </div>
                         <div id="precip-labels" class="d-flex justify-content-between text-white-50 small mt-3 px-2">
                             <!-- Labels injected via JS -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hourly Forecast Section -->
-        <div class="row w-100 justify-content-center mt-4">
-            <div class="col-lg-8">
-                <div class="glass p-4 p-md-5 text-white">
-                    <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
-                    <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
-                        <!-- Tabs injected via JS -->
-                    </ul>
-                    <div class="tab-content" id="hourly-content">
-                        <!-- Hourly content injected via JS -->
-                        <div class="text-center">
-                            <div class="spinner-border text-light" role="status">
-                                <span class="visually-hidden">Načítání hodinové předpovědi...</span>
-                            </div>
                         </div>
                     </div>
                 </div>

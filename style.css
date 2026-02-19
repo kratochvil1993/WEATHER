@@ -572,12 +572,18 @@ i.bi {
   justify-content: center;
 }
 
-.sticky-nav.is-stuck {
-  background: rgba(0, 0, 0, 0.15); 
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  border-radius: 0 0 15px 15px;
+@media only screen and (max-width: 767px) {  
+  .sticky-nav.is-stuck {
+    background: rgba(0, 0, 0, 0.15); 
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 0 0 15px 15px;
+  }
+  .sticky-nav button {
+    padding: 5px 25px;
+    font-size: 14px;
+  }
 }
 
 /* Add a pseudo-element for background gradient only when actually sticky? 
