@@ -206,7 +206,7 @@ i.bi {
   display: flex;
   overflow-x: auto;
   /* overflow-x: hidden; */
-  gap: 1.5rem;
+  gap: .6rem;
   padding-bottom: 1rem;
   scrollbar-width: thin;
   scrollbar-color: var(--glass-accent) transparent;
@@ -398,8 +398,12 @@ i.bi {
 .side-panel .nav-link {
   transition: all 0.2s;
   border-radius: 10px;
+  display: flex;
 }
 
+.side-panel .nav-link i{
+  margin-right: .5rem !important;
+}
 .side-panel .nav-link:hover {
   background: var(--glass-hover-bg);
   color: var(--glass-accent);

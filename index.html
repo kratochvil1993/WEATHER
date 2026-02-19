@@ -30,8 +30,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=8">
-    <script src="script.js?v=8"></script>
+    <link rel="stylesheet" href="style.css?v=9">
+    <script src="script.js?v=9"></script>
 </head>
 
 <body>
@@ -91,7 +91,7 @@
         </div>
     </div>
 
-    <div class="container d-flex flex-column align-items-center justify-content-center min-vh-100 py-5 pt-2">
+    <div class="container Xd-flex Xflex-column Xalign-items-center Xjustify-content-center Xmin-vh-100 py-5 pt-2">
         <!-- Search Section -->
         <div class="row w-100 justify-content-center mb-4">
             <div class="col-lg-7 position-relative">
@@ -119,8 +119,8 @@
 
 
 
-        <div class="row w-100 justify-content-center">
-            <div class="col-lg-4 mb-4 mb-lg-0">
+        <div class="row Xw-100 justify-content-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
                 <div
                     class="weather-card glass p-4 p-md-5 text-center text-white h-100 d-flex flex-column justify-content-center">
                     <h1 class="mb-4 fw-light">Počasí v Plzni</h1>
@@ -193,8 +193,8 @@
                 </div>
             </div>
 
-            <div class="col-lg-4">
-                <div class="glass p-4 p-md-5 text-white h-100">
+            <div class="col-lg-6">
+                <div class="glass p-4 p-md-4 text-white h-100">
                     <h2 class="mb-4 fw-light text-center">Předpověď na 7 dní</h2>
                     <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="forecast-tabs" role="tablist">
                         <!-- Tabs will be injected via JS -->
@@ -212,8 +212,8 @@
         </div>
 
         <!-- Hourly Forecast Section -->
-        <div class="row w-100 justify-content-center mt-4">
-            <div class="col-lg-8">
+        <div class="row Xw-100 justify-content-center mt-4">
+            <div class="col-lg-12">
                 <div class="glass p-4 p-md-5 text-white">
                     <h2 class="mb-4 fw-light text-center">Hodinová Předpověď</h2>
                     <ul class="nav nav-pills mb-4 justify-content-center gap-2" id="hourly-tabs" role="tablist">
@@ -232,150 +232,152 @@
         </div>
 
         <!-- Lifestyle Section -->
-        <div class="row w-100 justify-content-center mt-4">
-            <div class="glass p-4 p-md-5 text-white">
-                <h2 class="mb-4 fw-light text-center">Chytrá doporučení</h2>
+        <div class="row Xw-100 justify-content-center mt-4">
+            <div class="col-12">
+                <div class="glass p-4 p-md-5 text-white">
+                    <h2 class="mb-4 fw-light text-center">Chytrá doporučení</h2>
 
-                <!-- Outfit Recommendation -->
-                <div class="glass-light p-4 mb-4 rounded-4 d-flex align-items-center justify-content-center gap-4 text-center text-md-start flex-column flex-md-row"
-                    id="outfit-card">
-                    <i class="bi bi-person-arms-up display-4" id="outfit-icon"></i>
-                    <div>
-                        <h4 class="fw-bold mb-1">Co na sebe?</h4>
-                        <p class="mb-0 opacity-75 fs-5" id="outfit-text">Načítám doporučení...</p>
-                    </div>
-                </div>
-
-
-                <div class="row g-3">
-                    <!-- Original 4 (Always Visible) -->
-                    <div class="col-6 col-md-3">
-                        <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                            id="lifestyle-running" title="Běhání">
-                            <i class="bi bi-person-running fs-1 mb-2"></i>
-                            <span class="fw-bold mb-1">Běhání</span>
-                            <span class="status-icon fs-3">--</span>
+                    <!-- Outfit Recommendation -->
+                    <div class="glass-light p-4 mb-4 rounded-4 d-flex align-items-center justify-content-center gap-4 text-center text-md-start flex-column flex-md-row"
+                        id="outfit-card">
+                        <i class="bi bi-person-arms-up display-4" id="outfit-icon"></i>
+                        <div>
+                            <h4 class="fw-bold mb-1">Co na sebe?</h4>
+                            <p class="mb-0 opacity-75 fs-5" id="outfit-text">Načítám doporučení...</p>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                            id="lifestyle-laundry" title="Sušení prádla">
-                            <i class="bi bi-sun fs-1 mb-2"></i>
-                            <span class="fw-bold mb-1">Sušení prádla</span>
-                            <span class="status-icon fs-3">--</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                            id="lifestyle-car" title="Mytí auta">
-                            <i class="bi bi-car-front fs-1 mb-2"></i>
-                            <span class="fw-bold mb-1">Mytí auta</span>
-                            <span class="status-icon fs-3">--</span>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                            id="lifestyle-stars" title="Pozorování hvězd">
-                            <i class="bi bi-stars fs-1 mb-2"></i>
-                            <span class="fw-bold mb-1">Hvězdy</span>
-                            <span class="status-icon fs-3">--</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Collapsible Section for More Items -->
-                <div class="collapse mt-3" id="lifestyle-more">
+
                     <div class="row g-3">
+                        <!-- Original 4 (Always Visible) -->
                         <div class="col-6 col-md-3">
                             <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-uv" title="Opalování / UV">
-                                <i class="bi bi-sunglasses fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Opalování</span>
+                                id="lifestyle-running" title="Běhání">
+                                <i class="bi bi-person-running fs-1 mb-2"></i>
+                                <span class="fw-bold mb-1">Běhání</span>
                                 <span class="status-icon fs-3">--</span>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-ventilation" title="Větrání">
-                                <i class="bi bi-wind fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Větrání</span>
+                                id="lifestyle-laundry" title="Sušení prádla">
+                                <i class="bi bi-sun fs-1 mb-2"></i>
+                                <span class="fw-bold mb-1">Sušení prádla</span>
                                 <span class="status-icon fs-3">--</span>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-migraine" title="Riziko migrény">
-                                <i class="bi bi-activity fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Hlava/Tlak</span>
+                                id="lifestyle-car" title="Mytí auta">
+                                <i class="bi bi-car-front fs-1 mb-2"></i>
+                                <span class="fw-bold mb-1">Mytí auta</span>
                                 <span class="status-icon fs-3">--</span>
                             </div>
                         </div>
                         <div class="col-6 col-md-3">
                             <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-garden" title="Zalévání zahrady">
-                                <i class="bi bi-flower1 fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Zahrada</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-mosquito" title="Aktivita komárů">
-                                <i class="bi bi-bug fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Komáři</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-bbq" title="Grilování">
-                                <i class="bi bi-fire fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Grilování</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-cycling" title="Cyklistika">
-                                <i class="bi bi-bicycle fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Kolo</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-dog" title="Venčení psa">
-                                <i class="bi bi-person-walking fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Venčení</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-solar" title="Solární energie">
-                                <i class="bi bi-lightning-charge fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Soláry</span>
-                                <span class="status-icon fs-3">--</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
-                                id="lifestyle-window" title="Mytí oken">
-                                <i class="bi bi-window fs-1 mb-2"></i>
-                                <span class="fw-bold mb-1">Mytí oken</span>
+                                id="lifestyle-stars" title="Pozorování hvězd">
+                                <i class="bi bi-stars fs-1 mb-2"></i>
+                                <span class="fw-bold mb-1">Hvězdy</span>
                                 <span class="status-icon fs-3">--</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Toggle Button -->
-                <div class="text-center mt-3">
-                    <button class="btn btn-sm btn-glass text-white px-4" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#lifestyle-more" aria-expanded="false" aria-controls="lifestyle-more"
-                        id="lifestyle-toggle-btn">
-                        Zobrazit více <i class="bi bi-chevron-down ms-1"></i>
-                    </button>
+                    <!-- Collapsible Section for More Items -->
+                    <div class="collapse mt-3" id="lifestyle-more">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-uv" title="Opalování / UV">
+                                    <i class="bi bi-sunglasses fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Opalování</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-ventilation" title="Větrání">
+                                    <i class="bi bi-wind fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Větrání</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-migraine" title="Riziko migrény">
+                                    <i class="bi bi-activity fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Hlava/Tlak</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-garden" title="Zalévání zahrady">
+                                    <i class="bi bi-flower1 fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Zahrada</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-mosquito" title="Aktivita komárů">
+                                    <i class="bi bi-bug fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Komáři</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-bbq" title="Grilování">
+                                    <i class="bi bi-fire fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Grilování</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-cycling" title="Cyklistika">
+                                    <i class="bi bi-bicycle fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Kolo</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-dog" title="Venčení psa">
+                                    <i class="bi bi-person-walking fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Venčení</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-solar" title="Solární energie">
+                                    <i class="bi bi-lightning-charge fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Soláry</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="glass-light p-3 h-100 d-flex flex-column align-items-center justify-content-center text-center rounded-4"
+                                    id="lifestyle-window" title="Mytí oken">
+                                    <i class="bi bi-window fs-1 mb-2"></i>
+                                    <span class="fw-bold mb-1">Mytí oken</span>
+                                    <span class="status-icon fs-3">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Button -->
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-glass text-white px-4" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#lifestyle-more" aria-expanded="false" aria-controls="lifestyle-more"
+                            id="lifestyle-toggle-btn">
+                            Zobrazit více <i class="bi bi-chevron-down ms-1"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -385,8 +387,8 @@
 
 
         <!-- Precipitation Chart Section (Separate) -->
-        <div class="row w-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
-            <div class="col-lg-8">
+        <div class="row Xw-100 justify-content-center mt-4 d-none" id="precip-section-wrapper">
+            <div class="col-lg-12">
                 <div class="glass p-4 p-md-5 text-white">
                     <h2 class="mb-4 fw-light text-center"><i class="bi bi-cloud-drizzle me-2"></i>Srážky (příští hodina)
                     </h2>
@@ -404,8 +406,8 @@
         </div>
 
         <!-- Weather Map Section -->
-        <div class="row w-100 justify-content-center mt-4 mb-5">
-            <div class="col-lg-8">
+        <div class="row Xw-100 justify-content-center mt-4 mb-5">
+            <div class="col-lg-12">
                 <div class="glass p-4 text-white">
                     <h2 class="mb-4 fw-light text-center">Srážkový Radar</h2>
                     <div id="weather-map" class="rounded overflow-hidden" style="height: 450px; z-index: 1;">
