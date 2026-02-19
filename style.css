@@ -97,6 +97,7 @@ body {
     /* Use variables for interactive movement and combining with animation scale */
     transform: translate(var(--tx, 0), var(--ty, 0)) scale(calc(var(--s, 1) * var(--hover-s, 1)));
     transition: transform 0.4s ease-out, opacity 0.5s ease;
+    will-change: transform;
 }
 
 @keyframes glass-float {

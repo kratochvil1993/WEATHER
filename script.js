@@ -27,25 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
       blob.style.animationDuration = `${15 + Math.random() * 10}s`;
       glass.appendChild(blob);
 
-      // Mouse Interaction for Blobs
-      glass.addEventListener('mousemove', (e) => {
-        const rect = glass.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Calculate offset (max ~80px move)
-        const moveX = (x / rect.width - 0.5) * 160;
-        const moveY = (y / rect.height - 0.5) * 160;
-
-        blob.style.setProperty('--tx', `${moveX}px`);
-        blob.style.setProperty('--ty', `${moveY}px`);
+      // Mouse Interaction for Blobs (Hover Only)
+      glass.addEventListener('mouseenter', () => {
         blob.style.setProperty('--hover-s', '1.5');
         blob.style.opacity = '0.5';
       });
 
       glass.addEventListener('mouseleave', () => {
-        blob.style.setProperty('--tx', '0px');
-        blob.style.setProperty('--ty', '0px');
         blob.style.setProperty('--hover-s', '1');
         blob.style.opacity = '0.25';
       });
