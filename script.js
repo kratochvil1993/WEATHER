@@ -554,7 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
         active: "rgba(255, 255, 255, 0.3)",
         accent: "#ffffff",
         glow: "rgba(255, 255, 255, 0.2)",
-        blob1: "#00E582",
+        blob1: "#00d2ff",
         blob2: "#2a5298"
       };
     } else if (temperature < 20) {
