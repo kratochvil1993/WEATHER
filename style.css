@@ -14,6 +14,7 @@
   /* New Dynamic Accents */
   --glass-accent: rgba(255, 255, 255, 0.9); /* Bright accent color for icons/text */
   --glow-color: rgba(255, 255, 255, 0.0); /* Subtle glow for main card */
+  --overlay-alpha: 0.6;
 }
 
 /* Global Styles */
@@ -59,12 +60,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4); /* Dark overlay for readability */
+  background: rgba(0, 0, 0, var(--overlay-alpha)); /* Dark overlay for readability */
   z-index: -1;
 }
 
 /* Glassmorphism Card */
 .glass {
+  position: relative;
+  overflow: hidden;
   background: var(--glass-bg);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -73,11 +76,35 @@ body {
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
   width: 100%;
   transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  z-index: 1;
 }
-
 
 .glass:hover {
   transform: translateY(-5px);
+}
+
+.glass-blob {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: var(--blob-color-1, var(--glass-accent));
+    filter: blur(80px);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.25;
+    pointer-events: none;
+    animation: glass-float 20s infinite linear;
+    /* Use variables for interactive movement and combining with animation scale */
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(calc(var(--s, 1) * var(--hover-s, 1)));
+    transition: transform 0.4s ease-out, opacity 0.5s ease;
+}
+
+@keyframes glass-float {
+    0% { top: -100px; left: -100px; --s: 1; }
+    25% { top: 60%; left: 80%; --s: 1.2; }
+    50% { top: 80%; left: -50px; --s: 0.8; }
+    75% { top: 10%; left: 60%; --s: 1.1; }
+    100% { top: -100px; left: -100px; --s: 1; }
 }
 
 /* Inner Glass Elements */
@@ -382,41 +409,77 @@ i.bi {
   transform: translateX(-100%) !important;
   transition: transform 0.3s ease-in-out;
   border-radius: 0 20px 20px 0;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   background: linear-gradient(
     180deg,
-    var(--bg-gradient-start) 0%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(0, 0, 0, 0.3) 100%
   );
-  box-shadow: 5px 0 15px var(--glass-shadow);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+  border-right: 1px solid var(--glass-border);
 }
 
 .side-panel.open {
   transform: translateX(0) !important;
 }
 
+.side-panel .nav {
+    position: relative;
+    z-index: 1;
+}
+
+.side-panel .nav-pill-blob {
+    position: absolute;
+    left: 1rem;
+    width: calc(100% - 2rem);
+    height: 48px; /* Default height of nav item */
+    background: var(--active-bg);
+    border-radius: 10px;
+    z-index: -1;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 15px var(--active-shadow);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(5px);
+    pointer-events: none;
+    opacity: 0;
+}
+
+.side-panel .nav-pill-blob::after {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: var(--glass-accent);
+    filter: blur(25px);
+    opacity: 0.3;
+    left: -10px;
+    top: -10px;
+    border-radius: 50%;
+}
+
 .side-panel .nav-link {
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border-radius: 10px;
   display: flex;
+  position: relative;
+  z-index: 2;
+  border: 1px solid transparent;
 }
 
 .side-panel .nav-link i{
   margin-right: .5rem !important;
 }
+
 .side-panel .nav-link:hover {
-  background: var(--glass-hover-bg);
   color: var(--glass-accent);
   transform: translateX(5px);
   text-shadow: 0 0 10px var(--glow-color);
 }
 
 .side-panel .active-link {
-  background: var(--active-bg);
   color: var(--glass-accent) !important;
   font-weight: bold;
-  /* border-left: 4px solid var(--glass-accent); */
-  box-shadow: 0 4px 15px var(--active-shadow);
 }
 
 /* Icon only button adjustments */
@@ -623,6 +686,7 @@ i.bi {
 
 #map-progress {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     border-radius: 5px;  

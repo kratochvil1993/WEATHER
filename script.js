@@ -17,6 +17,74 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Inject blobs into .glass containers
+  document.querySelectorAll('.glass').forEach(glass => {
+    if (!glass.querySelector('.glass-blob')) {
+      const blob = document.createElement('div');
+      blob.className = 'glass-blob';
+      // Randomize animation delay to make them "random"
+      blob.style.animationDelay = `${Math.random() * -20}s`;
+      blob.style.animationDuration = `${15 + Math.random() * 10}s`;
+      glass.appendChild(blob);
+
+      // Mouse Interaction for Blobs
+      glass.addEventListener('mousemove', (e) => {
+        const rect = glass.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Calculate offset (max ~80px move)
+        const moveX = (x / rect.width - 0.5) * 160;
+        const moveY = (y / rect.height - 0.5) * 160;
+
+        blob.style.setProperty('--tx', `${moveX}px`);
+        blob.style.setProperty('--ty', `${moveY}px`);
+        blob.style.setProperty('--hover-s', '1.5');
+        blob.style.opacity = '0.5';
+      });
+
+      glass.addEventListener('mouseleave', () => {
+        blob.style.setProperty('--tx', '0px');
+        blob.style.setProperty('--ty', '0px');
+        blob.style.setProperty('--hover-s', '1');
+        blob.style.opacity = '0.25';
+      });
+    }
+  });
+
+  // Sidebar Magic Indicator
+  const sideNav = document.querySelector('.side-panel .nav');
+  if (sideNav) {
+    const indicator = document.createElement('div');
+    indicator.className = 'nav-pill-blob';
+    sideNav.appendChild(indicator);
+
+    const updateIndicator = () => {
+      const activeLink = sideNav.querySelector('.active-link');
+      if (activeLink) {
+        indicator.style.top = `${activeLink.offsetTop}px`;
+        indicator.style.height = `${activeLink.offsetHeight}px`;
+        indicator.style.opacity = '1';
+      }
+    };
+
+    // Initial position
+    setTimeout(updateIndicator, 100);
+
+    // Update on hover for "sliding" effect
+    const links = sideNav.querySelectorAll('.nav-link');
+    links.forEach(link => {
+      link.addEventListener('mouseenter', () => {
+        indicator.style.top = `${link.offsetTop}px`;
+        indicator.style.height = `${link.offsetHeight}px`;
+        indicator.style.opacity = '1';
+      });
+    });
+
+    // Return to active on leave
+    sideNav.addEventListener('mouseleave', updateIndicator);
+  }
+
   // Base locations configuration
   const baseLocations = {
     plzen: {
@@ -484,7 +552,9 @@ document.addEventListener("DOMContentLoaded", () => {
         hover: "rgba(76, 161, 175, 0.2)",
         active: "rgba(76, 161, 175, 0.3)",
         accent: "#a8e6cf", // Ice Mint
-        glow: "rgba(168, 230, 207, 0.6)"
+        glow: "rgba(168, 230, 207, 0.6)",
+        blob1: "#a8e6cf",
+        blob2: "#2c3e50"
       };
     } else if (temperature < 10) {
       // Chladno: Standardní modrá (Default)
@@ -495,7 +565,9 @@ document.addEventListener("DOMContentLoaded", () => {
         hover: "rgba(255, 255, 255, 0.2)",
         active: "rgba(255, 255, 255, 0.3)",
         accent: "#ffffff",
-        glow: "rgba(255, 255, 255, 0.2)"
+        glow: "rgba(255, 255, 255, 0.2)",
+        blob1: "#00E582",
+        blob2: "#2a5298"
       };
     } else if (temperature < 20) {
         // Jaro: Svěží zelená
@@ -506,7 +578,9 @@ document.addEventListener("DOMContentLoaded", () => {
           hover: "rgba(113, 178, 128, 0.2)",
           active: "rgba(113, 178, 128, 0.3)",
           accent: "#d4fc79", // Light Lime
-          glow: "rgba(212, 252, 121, 0.5)"
+          glow: "rgba(212, 252, 121, 0.5)",
+          blob1: "#d4fc79",
+          blob2: "#134E5E"
         };
     } else if (temperature < 30) {
       // Teplo: Slunečná oranžová
@@ -517,7 +591,9 @@ document.addEventListener("DOMContentLoaded", () => {
         hover: "rgba(242, 201, 76, 0.2)",
         active: "rgba(242, 201, 76, 0.3)",
         accent: "#ffe259", // Sun Yellow
-        glow: "rgba(255, 226, 89, 0.6)"
+        glow: "rgba(255, 226, 89, 0.6)",
+        blob1: "#ffe259",
+        blob2: "#F2994A"
       };
     } else {
       // Horko: Sytá červená
@@ -528,7 +604,9 @@ document.addEventListener("DOMContentLoaded", () => {
         hover: "rgba(255, 75, 43, 0.2)",
         active: "rgba(255, 75, 43, 0.3)",
         accent: "#ff9966", // Hot Orange
-        glow: "rgba(255, 153, 102, 0.7)"
+        glow: "rgba(255, 153, 102, 0.7)",
+        blob1: "#ff9966",
+        blob2: "#FF416C"
       };
     }
 
@@ -540,6 +618,8 @@ document.addEventListener("DOMContentLoaded", () => {
     root.style.setProperty('--active-bg', theme.active);
     root.style.setProperty('--glass-accent', theme.accent);
     root.style.setProperty('--glow-color', theme.glow);
+    root.style.setProperty('--blob-color-1', theme.blob1);
+    root.style.setProperty('--blob-color-2', theme.blob2);
   }
 
   /**
